@@ -62,23 +62,6 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
 });
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/collera', {
-    serverSelectionTimeoutMS: 30000, // 30 seconds for server selection
-    socketTimeoutMS: 45000,          // 45 seconds for socket operations
-    connectTimeoutMS: 30000,         // 30 seconds for initial connection
-    maxPoolSize: 10,                 // Maximum connection pool size
-    minPoolSize: 2,                  // Minimum connection pool size
-    retryWrites: true,
-    retryReads: true,
-})
-    .then(() => {
-        console.log('✅ Connected to MongoDB');
-    })
-    .catch((err) => {
-        console.error('❌ MongoDB connection error:', err);
-    });
-
 // Handle MongoDB connection events
 mongoose.connection.on('error', (err) => {
     console.error('❌ MongoDB error:', err);
@@ -92,11 +75,32 @@ mongoose.connection.on('reconnected', () => {
     console.log('✅ MongoDB reconnected');
 });
 
-// Start server
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 CollEra server running on port ${PORT}`);
-    console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
-});
+// Database connection and server start
+const startServer = async () => {
+    try {
+        await mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/collera', {
+            serverSelectionTimeoutMS: 30000,
+            socketTimeoutMS: 45000,
+            connectTimeoutMS: 30000,
+            maxPoolSize: 10,
+            minPoolSize: 2,
+            retryWrites: true,
+            retryReads: true,
+        });
+        console.log('✅ Connected to MongoDB');
+
+        // Start server only after DB connection is established
+        const PORT = process.env.PORT || 3000;
+        app.listen(PORT, '0.0.0.0', () => {
+            console.log(`🚀 CollEra server running on port ${PORT}`);
+            console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+        });
+    } catch (err) {
+        console.error('❌ MongoDB connection error:', err);
+        process.exit(1);
+    }
+};
+
+startServer();
 
 module.exports = app;
