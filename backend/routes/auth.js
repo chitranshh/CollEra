@@ -1,9 +1,47 @@
 const express = require('express');
 const router = express.Router();
 const { v4: uuidv4 } = require('uuid');
+const dns = require('dns').promises;
 const User = require('../models/User');
 const { generateToken, protect, optionalAuth } = require('../middleware/auth');
 const { sendVerificationEmail, sendWelcomeEmail, sendPasswordResetEmail } = require('../utils/emailService');
+
+// Validate email format (catches edge cases like dots before @)
+const isValidEmailFormat = (email) => {
+    // RFC 5322 compliant email regex (simplified but covers common edge cases)
+    const emailRegex = /^[a-zA-Z0-9](?:[a-zA-Z0-9._-]*[a-zA-Z0-9])?@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/;
+
+    // Additional checks
+    if (!email || typeof email !== 'string') return false;
+    if (email.includes('..')) return false; // No consecutive dots
+    if (email.includes('.@')) return false; // No dot before @
+    if (email.includes('@.')) return false; // No dot after @
+    if (email.startsWith('.')) return false; // No leading dot
+
+    return emailRegex.test(email);
+};
+
+// Check if email domain has valid MX records (mail servers exist)
+const verifyEmailDomain = async (email) => {
+    const domain = email.split('@')[1];
+    if (!domain) return { valid: false, reason: 'Invalid email format' };
+
+    try {
+        // Check for MX records (mail exchange servers)
+        const mxRecords = await dns.resolveMx(domain);
+        if (mxRecords && mxRecords.length > 0) {
+            return { valid: true };
+        }
+        return { valid: false, reason: 'Email domain does not accept emails' };
+    } catch (error) {
+        if (error.code === 'ENOTFOUND' || error.code === 'ENODATA') {
+            return { valid: false, reason: 'Email domain does not exist' };
+        }
+        // For other errors (network issues), allow the email to pass
+        console.log('DNS lookup warning:', error.message);
+        return { valid: true }; // Don't block on DNS errors
+    }
+};
 
 // List of valid Indian college email domains (can be expanded)
 const isValidCollegeEmail = (email) => {
@@ -32,11 +70,28 @@ router.post('/register', async (req, res) => {
     try {
         const { firstName, lastName, email, password, collegeName, course, year } = req.body;
 
+        // Validate email format first
+        if (!isValidEmailFormat(email)) {
+            return res.status(400).json({
+                success: false,
+                message: 'Please enter a valid email address format (e.g., name@college.edu.in)'
+            });
+        }
+
         // Validate college email
         if (!isValidCollegeEmail(email)) {
             return res.status(400).json({
                 success: false,
                 message: 'Please use a valid college email address (.edu.in, .ac.in, or .edu)'
+            });
+        }
+
+        // Verify email domain has valid mail servers
+        const domainCheck = await verifyEmailDomain(email);
+        if (!domainCheck.valid) {
+            return res.status(400).json({
+                success: false,
+                message: domainCheck.reason || 'This email domain appears to be invalid'
             });
         }
 

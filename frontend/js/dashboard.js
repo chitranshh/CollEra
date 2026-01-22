@@ -681,7 +681,7 @@ function showEditProfile() {
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const dobValue = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
-    
+
     showModal('Edit Profile', `
         <form id="editProfileForm" class="edit-profile-form">
             <div class="profile-picture-section">
@@ -780,15 +780,15 @@ let profilePictureBase64 = null;
 function handleProfilePictureChange(event) {
     const file = event.target.files[0];
     if (!file) return;
-    
+
     // Check file size (max 2MB)
     if (file.size > 2 * 1024 * 1024) {
         showToast('Image size should be less than 2MB', 'error');
         return;
     }
-    
+
     const reader = new FileReader();
-    reader.onload = function(e) {
+    reader.onload = function (e) {
         profilePictureBase64 = e.target.result;
         const preview = document.getElementById('profilePicturePreview');
         preview.innerHTML = `<img src="${profilePictureBase64}" alt="Profile">`;
@@ -831,7 +831,7 @@ async function handleEditProfile(e) {
         document.getElementById('userName').textContent = name;
         document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
         document.getElementById('postUserAvatar').textContent = name.charAt(0).toUpperCase();
-        
+
         // Reset profile picture state
         profilePictureBase64 = null;
 

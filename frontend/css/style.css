@@ -1638,3 +1638,480 @@ body {
     background: var(--primary);
     color: white;
 }
+
+/* ===== Public Colleges Section ===== */
+.colleges-section {
+    padding: var(--section-padding) 0;
+    position: relative;
+}
+
+.public-college-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 32px;
+    flex-wrap: wrap;
+}
+
+.public-tab {
+    padding: 12px 24px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+    color: var(--text-secondary);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.public-tab:hover {
+    background: var(--bg-card-hover);
+    border-color: var(--border-hover);
+    color: var(--text-primary);
+}
+
+.public-tab.active {
+    background: var(--primary-gradient);
+    border-color: transparent;
+    color: white;
+}
+
+.public-college-search {
+    max-width: 400px;
+    margin: 0 auto 40px;
+    position: relative;
+}
+
+.public-search-input {
+    width: 100%;
+    padding: 14px 48px 14px 20px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+    color: var(--text-primary);
+    font-size: 14px;
+    transition: all var(--transition-fast);
+}
+
+.public-search-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.public-college-search svg {
+    position: absolute;
+    right: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--text-muted);
+}
+
+.public-colleges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 20px;
+    margin-bottom: 48px;
+}
+
+.public-college-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 24px;
+    cursor: pointer;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.public-college-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: var(--primary-gradient);
+    opacity: 0;
+    transition: opacity var(--transition-fast);
+}
+
+.public-college-card:hover {
+    transform: translateY(-4px);
+    border-color: var(--primary);
+    box-shadow: 0 12px 40px rgba(102, 126, 234, 0.2);
+}
+
+.public-college-card:hover::before {
+    opacity: 0.05;
+}
+
+.public-college-rank-badge {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--primary-gradient);
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    color: white;
+}
+
+.public-college-info {
+    position: relative;
+    z-index: 1;
+}
+
+.public-college-info h3 {
+    font-size: 18px;
+    font-weight: 600;
+    margin-bottom: 12px;
+    padding-right: 50px;
+}
+
+.public-college-action {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--primary);
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.public-college-action svg {
+    transition: transform var(--transition-fast);
+}
+
+.public-college-card:hover .public-college-action svg {
+    transform: translateX(4px);
+}
+
+.public-colleges-cta {
+    text-align: center;
+    padding: 40px;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+}
+
+.public-colleges-cta p {
+    color: var(--text-secondary);
+    margin-bottom: 20px;
+}
+
+/* ===== Public Review Modal ===== */
+.public-review-modal {
+    max-width: 700px;
+    max-height: 85vh;
+    overflow-y: auto;
+}
+
+.public-review-modal.active {
+    display: block;
+}
+
+.public-modal-content {
+    padding: 20px 0;
+}
+
+.public-college-header {
+    text-align: center;
+    margin-bottom: 32px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.public-college-header h2 {
+    font-size: 28px;
+    font-weight: 700;
+    margin-bottom: 12px;
+}
+
+.public-college-meta {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+.public-college-rank {
+    background: var(--primary-gradient);
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+.public-college-category {
+    background: var(--bg-card-hover);
+    padding: 4px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    color: var(--text-secondary);
+}
+
+.public-avg-ratings {
+    margin-bottom: 32px;
+}
+
+.public-avg-ratings h3 {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.public-ratings-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 16px;
+}
+
+.public-rating-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--bg-card);
+    border-radius: 12px;
+}
+
+.public-rating-item .rating-icon {
+    font-size: 20px;
+}
+
+.public-rating-item .rating-info {
+    flex: 1;
+}
+
+.public-rating-item .rating-label {
+    display: block;
+    font-size: 12px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.public-rating-item .rating-bar {
+    height: 6px;
+    background: var(--bg-card-hover);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.public-rating-item .rating-fill {
+    height: 100%;
+    background: var(--primary-gradient);
+    border-radius: 3px;
+    transition: width 0.5s ease;
+}
+
+.public-rating-item .rating-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.public-reviews-list h3 {
+    font-size: 18px;
+    margin-bottom: 20px;
+}
+
+.public-reviews-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    max-height: 400px;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.public-reviews-loading {
+    text-align: center;
+    padding: 40px;
+    color: var(--text-secondary);
+}
+
+.public-no-reviews {
+    text-align: center;
+    padding: 48px 24px;
+}
+
+.public-no-reviews .no-reviews-icon {
+    font-size: 48px;
+    display: block;
+    margin-bottom: 16px;
+}
+
+.public-no-reviews p {
+    font-size: 16px;
+    margin-bottom: 8px;
+}
+
+.public-no-reviews small {
+    color: var(--text-muted);
+}
+
+.public-review-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.public-review-card .review-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.public-review-card .reviewer-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-gradient);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.public-review-card .reviewer-info {
+    flex: 1;
+}
+
+.public-review-card .reviewer-name {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.public-review-card .review-date {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.public-review-card .review-rating {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.public-review-card .review-rating .stars {
+    font-size: 12px;
+}
+
+.public-review-card .review-rating .rating-num {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.public-review-card .review-title {
+    font-size: 16px;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.public-review-card .review-content {
+    font-size: 14px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin-bottom: 16px;
+}
+
+.public-review-card .review-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+}
+
+.public-review-card .helpful-count {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+.helpful-btn-disabled {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 16px;
+    background: var(--bg-card-hover);
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+}
+
+.helpful-btn-disabled:hover {
+    border-color: var(--primary);
+    color: var(--primary);
+}
+
+.public-signup-prompt {
+    margin-top: 24px;
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+    border: 1px solid rgba(102, 126, 234, 0.3);
+    border-radius: 16px;
+    padding: 20px;
+}
+
+.public-signup-prompt .prompt-content {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.public-signup-prompt .prompt-icon {
+    font-size: 32px;
+}
+
+.public-signup-prompt .prompt-text {
+    flex: 1;
+}
+
+.public-signup-prompt .prompt-text strong {
+    display: block;
+    margin-bottom: 4px;
+}
+
+.public-signup-prompt .prompt-text p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+/* Responsive for public colleges */
+@media (max-width: 768px) {
+    .public-college-tabs {
+        padding: 0 16px;
+    }
+
+    .public-tab {
+        padding: 10px 16px;
+        font-size: 13px;
+    }
+
+    .public-colleges-grid {
+        grid-template-columns: 1fr;
+        padding: 0 16px;
+    }
+
+    .public-ratings-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .public-signup-prompt .prompt-content {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .public-signup-prompt .prompt-text {
+        text-align: center;
+    }
+}

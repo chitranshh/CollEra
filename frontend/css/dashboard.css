@@ -1544,7 +1544,7 @@
     .form-row {
         grid-template-columns: 1fr;
     }
-    
+
     .profile-picture-section {
         flex-direction: column;
         text-align: center;

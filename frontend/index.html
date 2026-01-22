@@ -367,6 +367,93 @@
         </div>
     </section>
 
+    <!-- Colleges Section - Public View -->
+    <section class="colleges-section" id="colleges">
+        <div class="container">
+            <div class="section-header">
+                <span class="section-badge">Top Colleges</span>
+                <h2 class="section-title">Explore <span class="gradient-text">College Reviews</span></h2>
+                <p class="section-subtitle">Read authentic reviews from verified students at India's top institutions
+                </p>
+            </div>
+
+            <!-- College Categories -->
+            <div class="public-college-tabs">
+                <button class="public-tab active" data-category="engineering">🏗️ Engineering</button>
+                <button class="public-tab" data-category="management">💼 Management</button>
+                <button class="public-tab" data-category="medical">⚕️ Medical</button>
+                <button class="public-tab" data-category="universities">🎓 Universities</button>
+            </div>
+
+            <!-- Search Box -->
+            <div class="public-college-search">
+                <input type="text" id="publicCollegeSearch" placeholder="Search colleges..."
+                    class="public-search-input">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="11" cy="11" r="8" />
+                    <path d="M21 21l-4.35-4.35" />
+                </svg>
+            </div>
+
+            <!-- Colleges Grid -->
+            <div class="public-colleges-grid" id="publicCollegesGrid">
+                <!-- Populated by JavaScript -->
+            </div>
+
+            <!-- View More CTA -->
+            <div class="public-colleges-cta">
+                <p>Sign up to see all colleges, connect with students, and write your own reviews</p>
+                <button class="btn btn-primary" onclick="showRegister()">
+                    <span>Join CollEra Free</span>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M5 12h14M12 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Public College Review Modal -->
+    <div class="modal public-review-modal" id="publicReviewModal">
+        <button class="modal-close" onclick="closePublicReviewModal()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+        </button>
+        <div class="public-modal-content">
+            <div class="public-college-header">
+                <h2 id="publicCollegeName">College Name</h2>
+                <div class="public-college-meta">
+                    <span class="public-college-rank" id="publicCollegeRank">#1</span>
+                    <span class="public-college-category" id="publicCollegeCategory">Engineering</span>
+                </div>
+            </div>
+
+            <!-- Average Ratings -->
+            <div class="public-avg-ratings" id="publicAvgRatings">
+                <!-- Populated by JS -->
+            </div>
+
+            <!-- Reviews List -->
+            <div class="public-reviews-list" id="publicReviewsList">
+                <div class="public-reviews-loading">Loading reviews...</div>
+            </div>
+
+            <!-- Sign Up Prompt -->
+            <div class="public-signup-prompt">
+                <div class="prompt-content">
+                    <span class="prompt-icon">✍️</span>
+                    <div class="prompt-text">
+                        <strong>Want to write a review?</strong>
+                        <p>Sign up with your college email to share your experience</p>
+                    </div>
+                    <button class="btn btn-primary" onclick="closePublicReviewModal(); showRegister();">Sign Up</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- CTA Section -->
     <section class="cta-section">
         <div class="container">
@@ -527,9 +614,11 @@
                     required>
                 <span class="input-hint">Use your official .edu.in, .ac.in, or .edu email</span>
             </div>
-            <div class="form-group">
+            <div class="form-group college-autocomplete-group">
                 <label for="collegeName">College Name</label>
-                <input type="text" id="collegeName" name="collegeName" placeholder="ABES Engineering College" required>
+                <input type="text" id="collegeName" name="collegeName" placeholder="Start typing your college name..."
+                    required autocomplete="off">
+                <div class="college-suggestions" id="collegeSuggestions"></div>
             </div>
             <div class="form-row">
                 <div class="form-group">

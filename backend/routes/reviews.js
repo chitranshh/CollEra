@@ -3,6 +3,46 @@ const router = express.Router();
 const CollegeReview = require('../models/CollegeReview');
 const { protect } = require('../middleware/auth');
 
+// @route   GET /api/reviews/public/:collegeName
+// @desc    Get all reviews for a specific college (PUBLIC - no auth required)
+// @access  Public
+router.get('/public/:collegeName', async (req, res) => {
+    try {
+        const collegeName = decodeURIComponent(req.params.collegeName);
+        const { page = 1, limit = 10, sort = '-createdAt' } = req.query;
+
+        const reviews = await CollegeReview.find({ collegeName })
+            .populate('author', 'firstName lastName collegeName')
+            .sort(sort)
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit));
+
+        const total = await CollegeReview.countDocuments({ collegeName });
+        const averageRatings = await CollegeReview.getAverageRatings(collegeName);
+
+        res.json({
+            success: true,
+            data: {
+                reviews,
+                averageRatings,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    total,
+                    pages: Math.ceil(total / limit)
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Get public reviews error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch reviews'
+        });
+    }
+});
+
 // @route   GET /api/reviews/:collegeName
 // @desc    Get all reviews for a specific college
 // @access  Private
