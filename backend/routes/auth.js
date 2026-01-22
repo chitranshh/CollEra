@@ -303,7 +303,20 @@ router.post('/login', async (req, res) => {
                     course: user.course,
                     year: user.year,
                     bio: user.bio,
-                    profilePicture: user.profilePicture
+                    profilePicture: user.profilePicture,
+                    profileCompleted: user.profileCompleted || false,
+                    skills: user.skills || [],
+                    interests: user.interests || [],
+                    pronouns: user.pronouns || '',
+                    dob: user.dob,
+                    branch: user.branch,
+                    linkedIn: user.linkedIn,
+                    github: user.github,
+                    instagram: user.instagram,
+                    leetcode: user.leetcode,
+                    hackerrank: user.hackerrank,
+                    codechef: user.codechef,
+                    portfolio: user.portfolio
                 },
                 token
             }

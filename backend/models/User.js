@@ -93,6 +93,14 @@ const userSchema = new mongoose.Schema({
     linkedIn: String,
     github: String,
     portfolio: String,
+    instagram: String,
+    leetcode: String,
+    hackerrank: String,
+    codechef: String,
+    profileCompleted: {
+        type: Boolean,
+        default: false
+    },
     isOnline: {
         type: Boolean,
         default: false

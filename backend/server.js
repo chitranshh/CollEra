@@ -71,6 +71,23 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
+// Serve specific HTML pages
+app.get('/dashboard', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'dashboard.html'));
+});
+
+app.get('/onboarding', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'onboarding.html'));
+});
+
+app.get('/verification-success', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'verification-success.html'));
+});
+
+app.get('/verification-failed', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'frontend', 'verification-failed.html'));
+});
+
 // Serve frontend for all other routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));

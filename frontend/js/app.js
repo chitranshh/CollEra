@@ -214,9 +214,13 @@ async function handleLogin(event) {
             localStorage.setItem('token', data.data.token);
             localStorage.setItem('user', JSON.stringify(data.data.user));
 
-            // Redirect to dashboard
+            // Redirect to onboarding if profile not completed, otherwise dashboard
             setTimeout(() => {
-                window.location.href = '/dashboard';
+                if (!data.data.user.profileCompleted) {
+                    window.location.href = '/onboarding';
+                } else {
+                    window.location.href = '/dashboard';
+                }
             }, 1000);
         } else {
             messageDiv.className = 'form-message error';

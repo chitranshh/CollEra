@@ -113,7 +113,8 @@ router.put('/profile', protect, async (req, res) => {
         const allowedFields = [
             'firstName', 'lastName', 'name', 'course', 'year', 'branch',
             'bio', 'skills', 'interests', 'linkedIn', 'linkedin',
-            'github', 'portfolio', 'profilePicture', 'dob', 'pronouns'
+            'github', 'portfolio', 'profilePicture', 'dob', 'pronouns',
+            'instagram', 'leetcode', 'hackerrank', 'codechef', 'profileCompleted'
         ];
 
         const updates = {};
