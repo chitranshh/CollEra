@@ -584,49 +584,102 @@
                     <!-- College info loaded here -->
                 </div>
 
-                <!-- College Members Section -->
-                <div class="college-members-section" id="collegeMembersSection">
-                    <div class="members-header">
-                        <h3>
-                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
-                                stroke-width="2">
-                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                                <circle cx="9" cy="7" r="4" />
-                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-                            </svg>
-                            Students on CollEra
-                        </h3>
-                        <span class="members-count" id="collegeMembersCount">0 members</span>
+                <!-- College Stats Section -->
+                <div class="college-stats-section" id="collegeStatsSection">
+                    <div class="college-stat-card">
+                        <div class="stat-icon">👥</div>
+                        <div class="stat-value" id="collegeUserCount">0</div>
+                        <div class="stat-label">Students</div>
                     </div>
-                    <div class="members-list" id="collegeMembersList">
-                        <!-- Members loaded here -->
+                    <div class="college-stat-card">
+                        <div class="stat-icon">📝</div>
+                        <div class="stat-value" id="collegePostCount">0</div>
+                        <div class="stat-label">Posts</div>
                     </div>
-                    <button class="btn btn-secondary btn-sm load-more-members" id="loadMoreMembers"
-                        style="display: none;" onclick="loadMoreCollegeMembers()">
-                        Load More
+                    <div class="college-stat-card">
+                        <div class="stat-icon">⭐</div>
+                        <div class="stat-value" id="collegeReviewCount">0</div>
+                        <div class="stat-label">Reviews</div>
+                    </div>
+                </div>
+
+                <!-- College Tabs Navigation -->
+                <div class="college-tabs">
+                    <button class="college-tab active" data-college-tab="members" onclick="switchCollegeTab('members')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                            <circle cx="9" cy="7" r="4" />
+                            <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                            <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                        </svg>
+                        Students
+                    </button>
+                    <button class="college-tab" data-college-tab="feed" onclick="switchCollegeTab('feed')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                        </svg>
+                        Feed
+                    </button>
+                    <button class="college-tab" data-college-tab="reviews" onclick="switchCollegeTab('reviews')">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <polygon
+                                points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
+                        </svg>
+                        Reviews
                     </button>
                 </div>
 
-                <!-- College Tags Section -->
-                <div class="college-tags-section" id="collegeTagsSection">
-                    <h3>Popular Skills</h3>
-                    <div class="college-tags" id="collegeSkillsTags">
-                        <!-- Skills tags loaded here -->
+                <!-- College Members Tab -->
+                <div class="college-tab-content active" id="collegeMembersTab">
+                    <div class="college-members-section" id="collegeMembersSection">
+                        <div class="members-list" id="collegeMembersList">
+                            <!-- Members loaded here -->
+                        </div>
+                        <button class="btn btn-secondary btn-sm load-more-members" id="loadMoreMembers"
+                            style="display: none;" onclick="loadMoreCollegeMembers()">
+                            Load More
+                        </button>
+                    </div>
+
+                    <!-- College Tags Section -->
+                    <div class="college-tags-section" id="collegeTagsSection">
+                        <h3>Popular Skills</h3>
+                        <div class="college-tags" id="collegeSkillsTags">
+                            <!-- Skills tags loaded here -->
+                        </div>
                     </div>
                 </div>
 
-                <div class="college-reviews-section">
-                    <div class="reviews-header">
-                        <h3>Student Reviews</h3>
-                        <button class="btn btn-primary btn-sm" id="writeReviewBtn" onclick="openReviewModal()">Write
-                            Review</button>
+                <!-- College Feed Tab -->
+                <div class="college-tab-content" id="collegeFeedTab">
+                    <div class="college-feed-section">
+                        <div class="college-posts-list" id="collegePostsList">
+                            <!-- Posts loaded here -->
+                        </div>
+                        <button class="btn btn-secondary btn-sm" id="loadMoreCollegePosts" style="display: none;"
+                            onclick="loadMoreCollegePosts()">
+                            Load More Posts
+                        </button>
                     </div>
-                    <div class="reviews-summary" id="reviewsSummary">
-                        <!-- Reviews summary loaded here -->
-                    </div>
-                    <div class="reviews-list" id="reviewsList">
-                        <!-- Reviews loaded here -->
+                </div>
+
+                <!-- College Reviews Tab -->
+                <div class="college-tab-content" id="collegeReviewsTab">
+                    <div class="college-reviews-section">
+                        <div class="reviews-header">
+                            <h3>Student Reviews</h3>
+                            <button class="btn btn-primary btn-sm" id="writeReviewBtn" onclick="openReviewModal()">Write
+                                Review</button>
+                        </div>
+                        <div class="reviews-summary" id="reviewsSummary">
+                            <!-- Reviews summary loaded here -->
+                        </div>
+                        <div class="reviews-list" id="reviewsList">
+                            <!-- Reviews loaded here -->
+                        </div>
                     </div>
                 </div>
             </div>

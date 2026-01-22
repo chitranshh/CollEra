@@ -42,6 +42,55 @@ router.get('/', protect, async (req, res) => {
     }
 });
 
+// @route   GET /api/posts/college/:collegeName
+// @desc    Get posts from a specific college
+// @access  Private
+router.get('/college/:collegeName', protect, async (req, res) => {
+    try {
+        const collegeName = decodeURIComponent(req.params.collegeName);
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const skip = (page - 1) * limit;
+
+        // Find users from this college
+        const User = require('../models/User');
+        const collegeUsers = await User.find({
+            collegeName: new RegExp(collegeName, 'i')
+        }).select('_id');
+
+        const userIds = collegeUsers.map(u => u._id);
+
+        // Find posts by these users
+        const posts = await Post.find({ author: { $in: userIds } })
+            .populate('author', 'firstName lastName collegeName course year profilePicture')
+            .populate('comments.user', 'firstName lastName profilePicture')
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        const total = await Post.countDocuments({ author: { $in: userIds } });
+
+        res.json({
+            success: true,
+            data: {
+                posts,
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    pages: Math.ceil(total / limit)
+                }
+            }
+        });
+    } catch (error) {
+        console.error('Get college posts error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error fetching college posts'
+        });
+    }
+});
+
 // @route   POST /api/posts
 // @desc    Create a new post
 // @access  Private

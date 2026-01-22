@@ -1750,7 +1750,7 @@ function resetReviewForm() {
 
 async function openCollegeDetails(encodedName, type, location) {
     const name = decodeURIComponent(encodedName);
-    currentViewingCollege = { name, type, location, membersPage: 1 };
+    currentViewingCollege = { name, type, location, membersPage: 1, postsPage: 1 };
 
     const typeIcons = { engineering: '🏛️', management: '📊', medical: '🏥', university: '🎓' };
 
@@ -1784,18 +1784,166 @@ async function openCollegeDetails(encodedName, type, location) {
         }
     }
 
+    // Reset tabs to members
+    switchCollegeTab('members');
+
     // Show modal
     document.getElementById('collegeDetailsOverlay').style.display = 'flex';
 
-    // Load college members first
-    await loadCollegeMembers(name);
+    // Load all data
+    await Promise.all([
+        loadCollegeMembers(name),
+        loadCollegePosts(name),
+        loadCollegeReviews(name)
+    ]);
 
-    // Load reviews
-    await loadCollegeReviews(name);
+    // Update stats
+    updateCollegeStats();
+}
+
+// Switch between college tabs
+function switchCollegeTab(tabName) {
+    // Update tab buttons
+    document.querySelectorAll('.college-tab').forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.collegeTab === tabName);
+    });
+
+    // Update tab content
+    document.querySelectorAll('.college-tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+
+    const tabContent = document.getElementById(`college${tabName.charAt(0).toUpperCase() + tabName.slice(1)}Tab`);
+    if (tabContent) {
+        tabContent.classList.add('active');
+    }
+}
+
+// Update college stats
+function updateCollegeStats() {
+    const userCount = document.getElementById('collegeUserCount');
+    const postCount = document.getElementById('collegePostCount');
+    const reviewCount = document.getElementById('collegeReviewCount');
+
+    if (userCount) userCount.textContent = collegeMembersTotal || 0;
+    if (postCount) postCount.textContent = collegePostsTotal || 0;
+    if (reviewCount) reviewCount.textContent = collegeReviewsTotal || 0;
 }
 
 // College Members
 let collegeMembersData = [];
+let collegeMembersTotal = 0;
+
+// College Posts
+let collegePostsData = [];
+let collegePostsTotal = 0;
+
+// College Reviews Total
+let collegeReviewsTotal = 0;
+
+async function loadCollegePosts(collegeName, page = 1) {
+    const postsList = document.getElementById('collegePostsList');
+    const loadMoreBtn = document.getElementById('loadMoreCollegePosts');
+
+    if (page === 1) {
+        postsList.innerHTML = '<div class="loading-spinner small"><div class="spinner"></div></div>';
+        collegePostsData = [];
+    }
+
+    const data = await apiCall(`/api/posts/college/${encodeURIComponent(collegeName)}?page=${page}&limit=5`);
+
+    if (data && data.success) {
+        const { posts, pagination } = data.data;
+        collegePostsTotal = pagination.total;
+
+        if (page === 1) {
+            collegePostsData = posts;
+        } else {
+            collegePostsData = [...collegePostsData, ...posts];
+        }
+
+        if (collegePostsData.length > 0) {
+            postsList.innerHTML = collegePostsData.map(post => createCollegePostCard(post)).join('');
+
+            // Show/hide load more
+            if (pagination.page < pagination.pages) {
+                loadMoreBtn.style.display = 'block';
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        } else {
+            postsList.innerHTML = `
+                <div class="college-posts-empty">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <p>No posts from this college yet</p>
+                </div>
+            `;
+            loadMoreBtn.style.display = 'none';
+        }
+
+        // Update current viewing college page
+        if (currentViewingCollege) {
+            currentViewingCollege.postsPage = page;
+        }
+
+        updateCollegeStats();
+    }
+}
+
+function loadMoreCollegePosts() {
+    if (currentViewingCollege) {
+        loadCollegePosts(currentViewingCollege.name, currentViewingCollege.postsPage + 1);
+    }
+}
+
+function createCollegePostCard(post) {
+    const author = post.author;
+    const initials = `${author.firstName?.[0] || ''}${author.lastName?.[0] || ''}`.toUpperCase();
+    const timeAgo = getTimeAgo(new Date(post.createdAt));
+    const isLiked = post.likes?.includes(currentUser?.id);
+
+    return `
+        <div class="college-post-card">
+            <div class="post-header">
+                <div class="post-author">
+                    <div class="author-avatar">${author.profilePicture ? `<img src="${author.profilePicture}" alt="">` : initials}</div>
+                    <div class="author-info">
+                        <span class="author-name">${author.firstName} ${author.lastName}</span>
+                        <span class="post-meta">${author.course || ''} ${author.year ? `• Year ${author.year}` : ''} • ${timeAgo}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="post-content">
+                <p>${post.content}</p>
+                ${post.image ? `<img src="${post.image}" alt="Post image" class="post-image">` : ''}
+            </div>
+            <div class="post-actions">
+                <button class="post-action-btn ${isLiked ? 'liked' : ''}" onclick="likeCollegePost('${post._id}')">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2">
+                        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                    </svg>
+                    <span>${post.likes?.length || 0}</span>
+                </button>
+                <button class="post-action-btn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <span>${post.comments?.length || 0}</span>
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+async function likeCollegePost(postId) {
+    const data = await apiCall(`/api/posts/${postId}/like`, 'POST');
+    if (data && data.success && currentViewingCollege) {
+        // Reload the posts to reflect the change
+        loadCollegePosts(currentViewingCollege.name, 1);
+    }
+}
 
 async function loadCollegeMembers(collegeName, page = 1) {
     const membersList = document.getElementById('collegeMembersList');
@@ -1813,8 +1961,10 @@ async function loadCollegeMembers(collegeName, page = 1) {
     if (data && data.success) {
         const { users, total, pagination } = data.data;
 
-        // Update count
+        // Update count and store total
+        collegeMembersTotal = total;
         membersCount.textContent = `${total} member${total !== 1 ? 's' : ''}`;
+        updateCollegeStats();
 
         if (page === 1) {
             collegeMembersData = users;
@@ -1920,6 +2070,10 @@ async function loadCollegeReviews(collegeName) {
 
     if (data && data.success) {
         const { reviews, averageRatings } = data.data;
+
+        // Update reviews total and stats
+        collegeReviewsTotal = averageRatings?.totalReviews || reviews.length;
+        updateCollegeStats();
 
         if (averageRatings) {
             reviewsSummary.innerHTML = `
