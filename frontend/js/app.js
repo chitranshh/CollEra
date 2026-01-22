@@ -1,16 +1,5 @@
 // ===== CollEra App JavaScript =====
 
-// ===== IMMEDIATE AUTH CHECK - Redirect logged-in users =====
-(function () {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-
-    // If user is logged in and on landing page, redirect to dashboard
-    if (token && user && window.location.pathname === '/') {
-        window.location.replace('/dashboard');
-    }
-})();
-
 // ===== Hero Cards Shuffle =====
 const heroProfiles = [
     { initials: 'SM', name: 'Shashwat Mishra', college: 'Graphic Era University', gradient: 'gradient-bg' },
@@ -441,20 +430,25 @@ document.addEventListener('mousemove', (e) => {
 
 // ===== Check Auth State on Load =====
 function checkAuthState() {
-    // Auth redirect is handled by the IIFE at the top of the file
-    // This function now only handles UI updates for edge cases
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
 
-    // If somehow still on landing page while logged in, redirect
-    if (token && user && window.location.pathname === '/') {
-        window.location.replace('/dashboard');
-        return;
+    // If logged in, update nav to show logged-in state
+    if (token && user) {
+        try {
+            const userData = JSON.parse(user);
+            updateNavForLoggedInUser(userData);
+        } catch (e) {
+            // Invalid user data, clear it
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+        }
     }
 }
 
 function updateNavForLoggedInUser(user) {
     const navLinks = document.getElementById('navLinks');
+    if (!navLinks) return;
 
     // Replace entire nav with logged-in user navigation
     navLinks.innerHTML = `
