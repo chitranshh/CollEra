@@ -434,8 +434,9 @@ function checkAuthState() {
     const user = localStorage.getItem('user');
 
     if (token && user) {
-        // User is logged in - update nav
-        updateNavForLoggedInUser(JSON.parse(user));
+        // User is logged in - redirect to dashboard immediately
+        window.location.href = '/dashboard';
+        return;
     }
 }
 
