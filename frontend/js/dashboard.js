@@ -489,6 +489,29 @@ function handleSearch(event) {
     }, 300);
 }
 
+// ===== Explore Search =====
+let exploreSearchTimeout;
+function handleExploreSearch(event) {
+    clearTimeout(exploreSearchTimeout);
+
+    exploreSearchTimeout = setTimeout(async () => {
+        const query = event.target.value;
+
+        const params = new URLSearchParams({
+            page: 1,
+            limit: 20,
+            search: query
+        });
+
+        const data = await apiCall(`/api/users?${params}`);
+
+        if (data && data.success) {
+            users = data.data.users;
+            renderUsers();
+        }
+    }, 300);
+}
+
 // ===== User Menu =====
 function toggleUserMenu() {
     const menu = document.querySelector('.user-menu');
