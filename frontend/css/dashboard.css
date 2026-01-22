@@ -1180,6 +1180,242 @@
     font-size: 14px;
 }
 
+/* ===== Feed Welcome & Suggestions ===== */
+
+.feed-welcome-card {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.15), rgba(139, 92, 246, 0.1));
+    border: 1px solid rgba(99, 102, 241, 0.3);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 24px;
+}
+
+.welcome-header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 20px;
+}
+
+.welcome-icon {
+    font-size: 40px;
+    line-height: 1;
+}
+
+.welcome-text h2 {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin: 0 0 6px;
+}
+
+.welcome-text p {
+    font-size: 14px;
+    color: var(--text-secondary);
+    margin: 0;
+}
+
+.connection-progress {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.progress-bar {
+    flex: 1;
+    height: 8px;
+    background: var(--bg-darker);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+    border-radius: 4px;
+    transition: width 0.5s ease;
+}
+
+.progress-text {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--accent-primary);
+    white-space: nowrap;
+}
+
+.feed-suggestions-section {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 20px;
+}
+
+.feed-suggestions-section .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+}
+
+.feed-suggestions-section .section-header h3 {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+.feed-suggestions-section .section-header a {
+    font-size: 13px;
+    color: var(--accent-primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.feed-suggestions-section .section-header a:hover {
+    text-decoration: underline;
+}
+
+.feed-suggestions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+}
+
+.feed-suggestion-card {
+    background: var(--bg-darker);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    transition: all var(--transition-fast);
+}
+
+.feed-suggestion-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(99, 102, 241, 0.1);
+}
+
+.suggestion-card-avatar {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 12px;
+    position: relative;
+}
+
+.suggestion-card-avatar .online-indicator {
+    position: absolute;
+    bottom: 2px;
+    right: 2px;
+    width: 14px;
+    height: 14px;
+    background: #10b981;
+    border: 3px solid var(--bg-darker);
+    border-radius: 50%;
+}
+
+.suggestion-card-info {
+    margin-bottom: 12px;
+}
+
+.suggestion-card-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0 0 4px;
+}
+
+.suggestion-card-college {
+    font-size: 13px;
+    color: var(--text-secondary);
+    margin: 0 0 2px;
+}
+
+.suggestion-card-course {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.mutual-connections {
+    font-size: 12px;
+    color: var(--accent-primary);
+    margin: 6px 0 0;
+    font-weight: 500;
+}
+
+.suggestion-card-actions {
+    display: flex;
+    gap: 8px;
+    width: 100%;
+}
+
+.suggestion-card-actions .btn {
+    flex: 1;
+}
+
+.btn-ghost {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.btn-ghost:hover {
+    background: var(--bg-card);
+    border-color: var(--text-muted);
+    color: var(--text-primary);
+}
+
+.btn-sm {
+    padding: 8px 12px;
+    font-size: 12px;
+}
+
+.btn-sm svg {
+    margin-right: 4px;
+}
+
+.no-suggestions {
+    grid-column: 1 / -1;
+    text-align: center;
+    color: var(--text-muted);
+    font-size: 14px;
+    padding: 20px;
+}
+
+@media (max-width: 768px) {
+    .feed-suggestions-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .welcome-header {
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
+    }
+
+    .connection-progress {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .progress-bar {
+        width: 100%;
+    }
+}
+
 /* Explore Filters */
 .explore-filters {
     margin-bottom: 24px;

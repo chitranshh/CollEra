@@ -974,12 +974,14 @@ function closeModal() {
 }
 
 // ===== Posts/Feed Functions =====
+const MIN_CONNECTIONS_FOR_FEED = 3; // Minimum connections before showing full feed
+
 async function loadPosts() {
     const data = await apiCall(`/api/posts?page=${postsPage}&limit=10`);
 
     if (data && data.success) {
         posts = data.data.posts;
-        renderPosts();
+        renderFeed();
 
         // Show/hide load more button
         const loadMoreBtn = document.getElementById('loadMorePosts');
@@ -991,6 +993,165 @@ async function loadPosts() {
             }
         }
     }
+}
+
+function renderFeed() {
+    const feed = document.getElementById('postsFeed');
+    if (!feed) return;
+
+    const connectionCount = currentUser?.connections?.length || 0;
+
+    // If user has few connections, show connection suggestions on home feed
+    if (connectionCount < MIN_CONNECTIONS_FOR_FEED) {
+        renderConnectionSuggestionsFeed(feed);
+    } else {
+        // User has enough connections - show normal post feed
+        renderPosts();
+    }
+}
+
+// Render connection suggestions on home feed for new users
+function renderConnectionSuggestionsFeed(feed) {
+    const connectionCount = currentUser?.connections?.length || 0;
+
+    feed.innerHTML = `
+        <div class="feed-welcome-card">
+            <div class="welcome-header">
+                <div class="welcome-icon">👋</div>
+                <div class="welcome-text">
+                    <h2>Welcome to CollEra!</h2>
+                    <p>Connect with ${MIN_CONNECTIONS_FOR_FEED - connectionCount} more student${(MIN_CONNECTIONS_FOR_FEED - connectionCount) !== 1 ? 's' : ''} to unlock your personalized feed</p>
+                </div>
+            </div>
+            <div class="connection-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: ${(connectionCount / MIN_CONNECTIONS_FOR_FEED) * 100}%"></div>
+                </div>
+                <span class="progress-text">${connectionCount}/${MIN_CONNECTIONS_FOR_FEED} connections</span>
+            </div>
+        </div>
+
+        <div class="feed-suggestions-section">
+            <div class="section-header">
+                <h3>People you may know</h3>
+                <a href="#" onclick="switchToTab('explore'); return false;">See all</a>
+            </div>
+            <div class="feed-suggestions-grid" id="feedSuggestionsGrid">
+                <div class="loading-spinner small">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="feed-suggestions-section">
+            <div class="section-header">
+                <h3>Students from your college</h3>
+            </div>
+            <div class="feed-suggestions-grid" id="sameCollegeSuggestionsGrid">
+                <div class="loading-spinner small">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Load suggestions for the feed
+    loadFeedSuggestions();
+}
+
+// Load suggestions specifically for the home feed
+async function loadFeedSuggestions() {
+    // Load general suggestions
+    const data = await apiCall('/api/users?limit=6');
+    if (data && data.success) {
+        const suggestionsGrid = document.getElementById('feedSuggestionsGrid');
+        if (suggestionsGrid) {
+            const filteredUsers = data.data.users.filter(u =>
+                u._id !== currentUser?._id &&
+                !currentUser?.connections?.some(c => c._id === u._id || c === u._id) &&
+                !currentUser?.sentRequests?.some(r => r._id === u._id || r === u._id)
+            );
+
+            if (filteredUsers.length === 0) {
+                suggestionsGrid.innerHTML = '<p class="no-suggestions">No suggestions available</p>';
+            } else {
+                suggestionsGrid.innerHTML = filteredUsers.slice(0, 6).map(user => createFeedSuggestionCard(user)).join('');
+            }
+        }
+    }
+
+    // Load same college suggestions
+    const sameCollegeData = await apiCall(`/api/users?college=${encodeURIComponent(currentUser?.collegeName || '')}&limit=6`);
+    if (sameCollegeData && sameCollegeData.success) {
+        const sameCollegeGrid = document.getElementById('sameCollegeSuggestionsGrid');
+        if (sameCollegeGrid) {
+            const filteredUsers = sameCollegeData.data.users.filter(u =>
+                u._id !== currentUser?._id &&
+                !currentUser?.connections?.some(c => c._id === u._id || c === u._id) &&
+                !currentUser?.sentRequests?.some(r => r._id === u._id || r === u._id)
+            );
+
+            if (filteredUsers.length === 0) {
+                sameCollegeGrid.innerHTML = '<p class="no-suggestions">No students from your college found</p>';
+            } else {
+                sameCollegeGrid.innerHTML = filteredUsers.slice(0, 6).map(user => createFeedSuggestionCard(user)).join('');
+            }
+        }
+    }
+}
+
+// Create a suggestion card for the feed
+function createFeedSuggestionCard(user) {
+    const initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    const isPending = currentUser?.sentRequests?.some(r => r._id === user._id || r === user._id);
+    const mutualConnections = countMutualConnections(user);
+
+    return `
+        <div class="feed-suggestion-card" data-user-id="${user._id}">
+            <div class="suggestion-card-avatar">
+                ${initials}
+                ${user.isOnline ? '<span class="online-indicator"></span>' : ''}
+            </div>
+            <div class="suggestion-card-info">
+                <h4 class="suggestion-card-name">${user.firstName} ${user.lastName}</h4>
+                <p class="suggestion-card-college">${user.collegeName}</p>
+                ${user.course ? `<p class="suggestion-card-course">${user.course}${user.year ? ` • Year ${user.year}` : ''}</p>` : ''}
+                ${mutualConnections > 0 ? `<p class="mutual-connections">${mutualConnections} mutual connection${mutualConnections > 1 ? 's' : ''}</p>` : ''}
+            </div>
+            <div class="suggestion-card-actions">
+                ${isPending ?
+            '<button class="btn btn-secondary btn-sm" disabled>Pending</button>' :
+            `<button class="btn btn-primary btn-sm" onclick="sendConnectionRequest('${user._id}')">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                            <circle cx="8.5" cy="7" r="4"/>
+                            <line x1="20" y1="8" x2="20" y2="14"/>
+                            <line x1="23" y1="11" x2="17" y2="11"/>
+                        </svg>
+                        Connect
+                    </button>`
+        }
+                <button class="btn btn-ghost btn-sm" onclick="viewProfile('${user._id}')">View</button>
+            </div>
+        </div>
+    `;
+}
+
+// Count mutual connections
+function countMutualConnections(user) {
+    if (!currentUser?.connections || !user.connections) return 0;
+    const userConnections = user.connections.map(c => c._id || c);
+    const myConnections = currentUser.connections.map(c => c._id || c);
+    return userConnections.filter(c => myConnections.includes(c)).length;
+}
+
+// Switch to a specific tab
+function switchToTab(tabName) {
+    document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.getElementById(`${tabName}Tab`)?.classList.add('active');
 }
 
 function renderPosts() {
