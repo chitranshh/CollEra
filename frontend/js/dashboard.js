@@ -12,6 +12,13 @@ let postsPage = 1;
 let currentFilter = 'all';
 let currentSkillFilter = '';
 
+// Chat state
+let socket = null;
+let conversations = [];
+let currentConversation = null;
+let currentChatPartner = null;
+let typingTimeout = null;
+
 // ===== Initialize Dashboard =====
 document.addEventListener('DOMContentLoaded', async () => {
     // Check authentication
@@ -24,13 +31,18 @@ document.addEventListener('DOMContentLoaded', async () => {
     // Load user data
     await loadCurrentUser();
 
+    // Initialize Socket.io connection
+    initSocketConnection();
+
     // Load initial data
     await Promise.all([
         loadPosts(),
         loadUsers(),
         loadConnections(),
         loadPendingRequests(),
-        loadSuggestions()
+        loadSuggestions(),
+        loadConversations(),
+        loadUnreadCount()
     ]);
 
     // Initialize tab navigation
@@ -158,8 +170,14 @@ function createUserCard(user) {
     const isPending = currentUser?.sentRequests?.some(r => r._id === user._id || r === user._id);
 
     let actionButton = '';
+    let messageButton = '';
     if (isConnected) {
         actionButton = '<button class="btn btn-secondary" disabled>Connected</button>';
+        messageButton = `<button class="btn btn-secondary message-btn" onclick="event.stopPropagation(); startChatWith('${user._id}')">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+            </svg>
+        </button>`;
     } else if (isPending) {
         actionButton = '<button class="btn btn-secondary" disabled>Pending</button>';
     } else {
@@ -187,6 +205,7 @@ function createUserCard(user) {
             ` : ''}
             <div class="user-card-actions">
                 ${actionButton}
+                ${messageButton}
                 <button class="btn btn-secondary" onclick="viewProfile('${user._id}')">View Profile</button>
             </div>
         </div>
@@ -375,6 +394,12 @@ async function sendConnectionRequest(userId) {
 
     if (data && data.success) {
         showToast('Connection request sent!', 'success');
+
+        // Emit socket event for real-time notification
+        if (socket) {
+            socket.emit('connection_request', { targetUserId: userId });
+        }
+
         await loadCurrentUser();
         await loadUsers();
         await loadSuggestions();
@@ -388,6 +413,12 @@ async function acceptRequest(userId) {
 
     if (data && data.success) {
         showToast('Connection accepted!', 'success');
+
+        // Emit socket event for real-time notification
+        if (socket) {
+            socket.emit('connection_accepted', { requesterId: userId });
+        }
+
         await loadCurrentUser();
         await loadConnections();
         await loadPendingRequests();
@@ -1381,7 +1412,7 @@ function createCollegeCard(college) {
     );
     const yourCollegeBadge = isUserCollege ? '<span class="your-college-badge">✓ Your College</span>' : '';
 
-    const locationDisplay = college.location || 'India';
+    const locationDisplay = (college.location || 'India').replace(/'/g, "\\'");
 
     return `
         <div class="college-card" onclick="openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${locationDisplay}')">
@@ -1392,7 +1423,7 @@ function createCollegeCard(college) {
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                 </svg>
-                ${locationDisplay}
+                ${college.location || 'India'}
             </div>
             <span class="college-type ${college.type}">${college.type.charAt(0).toUpperCase() + college.type.slice(1)}</span>
             <button class="view-reviews-btn" onclick="event.stopPropagation(); openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${locationDisplay}')">
@@ -1869,4 +1900,677 @@ async function toggleHelpful(reviewId) {
             await loadCollegeReviews(currentViewingCollege.name);
         }
     }
+}
+
+// ===== Real-time Chat & Messaging =====
+
+// Initialize Socket.io connection
+function initSocketConnection() {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
+    socket = io({
+        auth: { token }
+    });
+
+    socket.on('connect', () => {
+        console.log('🔌 Connected to chat server');
+    });
+
+    socket.on('disconnect', () => {
+        console.log('🔌 Disconnected from chat server');
+    });
+
+    socket.on('new_message', (message) => {
+        handleIncomingMessage(message);
+    });
+
+    socket.on('message_sent', (message) => {
+        // Message confirmed sent
+        appendMessageToChat(message, true);
+    });
+
+    socket.on('user_typing', (data) => {
+        if (currentConversation && currentConversation._id === data.conversationId) {
+            showTypingIndicator(data.userName);
+        }
+    });
+
+    socket.on('user_stopped_typing', (data) => {
+        if (currentConversation && currentConversation._id === data.conversationId) {
+            hideTypingIndicator();
+        }
+    });
+
+    socket.on('messages_read', (data) => {
+        if (currentConversation && currentConversation._id === data.conversationId) {
+            markMessagesAsRead();
+        }
+    });
+
+    socket.on('user_online', (data) => {
+        updateUserOnlineStatus(data.userId, true);
+    });
+
+    socket.on('user_offline', (data) => {
+        updateUserOnlineStatus(data.userId, false);
+    });
+
+    socket.on('new_connection_request', (data) => {
+        showToast(`${data.from.firstName} ${data.from.lastName} sent you a connection request!`, 'info');
+        loadPendingRequests();
+    });
+
+    socket.on('connection_accepted_notification', (data) => {
+        showToast(`${data.by.firstName} ${data.by.lastName} accepted your connection request!`, 'success');
+        loadConnections();
+    });
+
+    socket.on('error', (data) => {
+        showToast(data.message, 'error');
+    });
+}
+
+// Load conversations
+async function loadConversations() {
+    const data = await apiCall('/api/chat/conversations');
+
+    if (data && data.success) {
+        conversations = data.data;
+        renderConversations();
+    }
+}
+
+// Render conversations list
+function renderConversations() {
+    const container = document.getElementById('conversationsItems');
+
+    if (!conversations || conversations.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state small">
+                <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                <p>No conversations yet</p>
+                <span>Start chatting with your connections!</span>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = conversations.map(conv => {
+        const initials = conv.participant ?
+            `${conv.participant.firstName[0]}${conv.participant.lastName[0]}`.toUpperCase() : 'U';
+        const isOnline = conv.participant?.isOnline;
+        const lastMessageTime = conv.lastMessage ? formatMessageTime(conv.lastMessage.createdAt) : '';
+        const lastMessagePreview = conv.lastMessage ?
+            (conv.lastMessage.sender === currentUser._id ? 'You: ' : '') + truncate(conv.lastMessage.content, 30) :
+            'No messages yet';
+
+        return `
+            <div class="conversation-item ${currentConversation?._id === conv._id ? 'active' : ''}" 
+                 onclick="openConversation('${conv._id}', '${conv.participant?._id}')">
+                <div class="conversation-avatar">
+                    ${initials}
+                    <span class="online-dot ${isOnline ? '' : 'offline'}"></span>
+                </div>
+                <div class="conversation-info">
+                    <div class="conversation-name">
+                        <span>${conv.participant?.firstName} ${conv.participant?.lastName}</span>
+                        <span class="time">${lastMessageTime}</span>
+                    </div>
+                    <div class="conversation-preview">
+                        <span>${lastMessagePreview}</span>
+                        ${conv.unreadCount > 0 ? `<span class="unread-badge">${conv.unreadCount}</span>` : ''}
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Open a conversation
+async function openConversation(conversationId, participantId) {
+    // Find conversation in our list
+    let conv = conversations.find(c => c._id === conversationId);
+
+    // If not found, we need to get or create it
+    if (!conv && participantId) {
+        const data = await apiCall(`/api/chat/conversation/${participantId}`);
+        if (data && data.success) {
+            conv = {
+                _id: data.data.conversationId,
+                participant: data.data.participant
+            };
+            // Reload conversations to include new one
+            await loadConversations();
+        }
+    }
+
+    if (!conv) {
+        showToast('Conversation not found', 'error');
+        return;
+    }
+
+    currentConversation = conv;
+    currentChatPartner = conv.participant;
+
+    // Mark conversation as active in list
+    document.querySelectorAll('.conversation-item').forEach(item => {
+        item.classList.remove('active');
+    });
+    const activeItem = document.querySelector(`.conversation-item[onclick*="${conversationId}"]`);
+    if (activeItem) activeItem.classList.add('active');
+
+    // Render chat window
+    renderChatWindow();
+
+    // Load messages
+    await loadMessages(conversationId);
+
+    // Mark messages as read
+    if (socket) {
+        socket.emit('mark_read', { conversationId });
+    }
+
+    // Update unread count
+    loadUnreadCount();
+}
+
+// Render chat window
+function renderChatWindow() {
+    const chatArea = document.getElementById('chatArea');
+    const template = document.getElementById('chatWindowTemplate');
+
+    if (!currentChatPartner) return;
+
+    const initials = `${currentChatPartner.firstName[0]}${currentChatPartner.lastName[0]}`.toUpperCase();
+    const isOnline = currentChatPartner.isOnline;
+
+    chatArea.innerHTML = `
+        <div class="chat-window">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-avatar">
+                        <span class="avatar-initials">${initials}</span>
+                        <span class="online-dot ${isOnline ? '' : 'offline'}"></span>
+                    </div>
+                    <div class="chat-user-info">
+                        <span class="chat-user-name">${currentChatPartner.firstName} ${currentChatPartner.lastName}</span>
+                        <span class="chat-user-status ${isOnline ? 'online' : ''}">${isOnline ? 'Online' : formatLastSeen(currentChatPartner.lastSeen)}</span>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="icon-btn" onclick="viewProfile('${currentChatPartner._id}')" title="View Profile">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <div class="loading-spinner small">
+                    <div class="spinner"></div>
+                </div>
+            </div>
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                <span class="typing-text"></span>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="messageInput" placeholder="Type a message..." 
+                       onkeydown="handleMessageKeydown(event)" 
+                       oninput="handleTyping()">
+                <button class="send-btn" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    `;
+
+    // Focus on input
+    setTimeout(() => {
+        document.getElementById('messageInput')?.focus();
+    }, 100);
+}
+
+// Load messages for a conversation
+async function loadMessages(conversationId) {
+    const data = await apiCall(`/api/chat/messages/${conversationId}`);
+
+    if (data && data.success) {
+        renderMessages(data.data.messages);
+    }
+}
+
+// Render messages
+function renderMessages(messages) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+
+    if (!messages || messages.length === 0) {
+        container.innerHTML = `
+            <div class="chat-placeholder" style="flex: 1; justify-content: center;">
+                <p>No messages yet. Say hello! 👋</p>
+            </div>
+        `;
+        return;
+    }
+
+    let html = '';
+    let lastDate = null;
+
+    messages.forEach(msg => {
+        const msgDate = new Date(msg.createdAt).toDateString();
+
+        // Add date divider if needed
+        if (msgDate !== lastDate) {
+            html += `
+                <div class="message-date-divider">
+                    <span>${formatDateDivider(msg.createdAt)}</span>
+                </div>
+            `;
+            lastDate = msgDate;
+        }
+
+        const isSent = msg.sender._id === currentUser._id || msg.sender === currentUser._id;
+        const time = formatMessageTime(msg.createdAt);
+
+        html += `
+            <div class="message ${isSent ? 'sent' : 'received'}">
+                ${msg.content}
+                <span class="message-time">${time}</span>
+            </div>
+        `;
+    });
+
+    container.innerHTML = html;
+
+    // Scroll to bottom
+    container.scrollTop = container.scrollHeight;
+}
+
+// Append a single message to chat
+function appendMessageToChat(message, isSent) {
+    const container = document.getElementById('chatMessages');
+    if (!container) return;
+
+    // Remove empty placeholder if present
+    const placeholder = container.querySelector('.chat-placeholder');
+    if (placeholder) {
+        placeholder.remove();
+    }
+
+    const time = formatMessageTime(message.createdAt);
+    const messageEl = document.createElement('div');
+    messageEl.className = `message ${isSent ? 'sent' : 'received'}`;
+    messageEl.innerHTML = `
+        ${message.content}
+        <span class="message-time">${time}</span>
+    `;
+
+    container.appendChild(messageEl);
+    container.scrollTop = container.scrollHeight;
+}
+
+// Handle incoming message
+function handleIncomingMessage(message) {
+    // Update conversations list
+    loadConversations();
+    loadUnreadCount();
+
+    // If this is the current conversation, append the message
+    if (currentConversation && message.conversation.toString() === currentConversation._id.toString()) {
+        appendMessageToChat(message, false);
+        hideTypingIndicator();
+
+        // Mark as read
+        if (socket) {
+            socket.emit('mark_read', { conversationId: currentConversation._id });
+        }
+    } else {
+        // Show notification for message in other conversation
+        const senderName = message.sender ? `${message.sender.firstName}` : 'Someone';
+        showToast(`New message from ${senderName}`, 'info');
+    }
+}
+
+// Send message
+async function sendMessage() {
+    const input = document.getElementById('messageInput');
+    const content = input?.value?.trim();
+
+    if (!content || !currentConversation || !currentChatPartner) return;
+
+    // Clear input
+    input.value = '';
+
+    // Send via socket for real-time
+    if (socket) {
+        socket.emit('send_message', {
+            recipientId: currentChatPartner._id,
+            content,
+            conversationId: currentConversation._id
+        });
+    } else {
+        // Fallback to REST API
+        const data = await apiCall(`/api/chat/send/${currentChatPartner._id}`, 'POST', { content });
+
+        if (data && data.success) {
+            appendMessageToChat(data.data.message, true);
+        } else {
+            showToast('Failed to send message', 'error');
+        }
+    }
+
+    // Stop typing indicator
+    if (socket) {
+        socket.emit('typing_stop', {
+            recipientId: currentChatPartner._id,
+            conversationId: currentConversation._id
+        });
+    }
+}
+
+// Handle message input keydown
+function handleMessageKeydown(event) {
+    if (event.key === 'Enter' && !event.shiftKey) {
+        event.preventDefault();
+        sendMessage();
+    }
+}
+
+// Handle typing indicator
+function handleTyping() {
+    if (!socket || !currentConversation || !currentChatPartner) return;
+
+    // Send typing start
+    socket.emit('typing_start', {
+        recipientId: currentChatPartner._id,
+        conversationId: currentConversation._id
+    });
+
+    // Clear existing timeout
+    if (typingTimeout) {
+        clearTimeout(typingTimeout);
+    }
+
+    // Set timeout to stop typing
+    typingTimeout = setTimeout(() => {
+        socket.emit('typing_stop', {
+            recipientId: currentChatPartner._id,
+            conversationId: currentConversation._id
+        });
+    }, 2000);
+}
+
+// Show typing indicator
+function showTypingIndicator(userName) {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) {
+        indicator.style.display = 'flex';
+        indicator.querySelector('.typing-text').textContent = `${userName} is typing`;
+    }
+}
+
+// Hide typing indicator
+function hideTypingIndicator() {
+    const indicator = document.getElementById('typingIndicator');
+    if (indicator) {
+        indicator.style.display = 'none';
+    }
+}
+
+// Load unread message count
+async function loadUnreadCount() {
+    const data = await apiCall('/api/chat/unread');
+
+    if (data && data.success) {
+        const badge = document.getElementById('messageBadge');
+        if (badge) {
+            badge.textContent = data.data.unreadCount;
+            badge.style.display = data.data.unreadCount > 0 ? 'flex' : 'none';
+        }
+    }
+}
+
+// Show new message modal
+function showNewMessageModal() {
+    const overlay = document.getElementById('newMessageModalOverlay');
+    overlay.classList.add('active');
+
+    // Populate connections list
+    renderConnectionsForChat();
+}
+
+// Close new message modal
+function closeNewMessageModal() {
+    const overlay = document.getElementById('newMessageModalOverlay');
+    overlay.classList.remove('active');
+
+    // Clear search
+    const input = document.getElementById('connectionSearchInput');
+    if (input) input.value = '';
+}
+
+// Render connections in the new message modal
+function renderConnectionsForChat() {
+    const container = document.getElementById('connectionsListModal');
+
+    if (!connections || connections.length === 0) {
+        container.innerHTML = `
+            <div class="empty-state small">
+                <p>No connections yet</p>
+                <span>Connect with other students to start chatting!</span>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = connections.map(conn => {
+        const initials = `${conn.firstName[0]}${conn.lastName[0]}`.toUpperCase();
+        return `
+            <div class="connection-item-modal" onclick="startChatWith('${conn._id}')">
+                <div class="connection-avatar">${initials}</div>
+                <div class="connection-info">
+                    <div class="connection-name">${conn.firstName} ${conn.lastName}</div>
+                    <div class="connection-college">${conn.collegeName}</div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+// Filter connections for chat modal
+function filterConnectionsForChat(event) {
+    const query = event.target.value.toLowerCase();
+    const items = document.querySelectorAll('.connection-item-modal');
+
+    items.forEach(item => {
+        const name = item.querySelector('.connection-name').textContent.toLowerCase();
+        const college = item.querySelector('.connection-college').textContent.toLowerCase();
+
+        if (name.includes(query) || college.includes(query)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Start chat with a connection
+async function startChatWith(userId) {
+    closeNewMessageModal();
+
+    // Switch to messages tab
+    document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
+    document.querySelector('[data-tab="messages"]').classList.add('active');
+
+    document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+    document.getElementById('messagesTab').classList.add('active');
+
+    // Get or create conversation
+    const data = await apiCall(`/api/chat/conversation/${userId}`);
+
+    if (data && data.success) {
+        await openConversation(data.data.conversationId, userId);
+    } else {
+        showToast('Failed to start conversation', 'error');
+    }
+}
+
+// Filter conversations
+function filterConversations(event) {
+    const query = event.target.value.toLowerCase();
+    const items = document.querySelectorAll('.conversation-item');
+
+    items.forEach(item => {
+        const name = item.querySelector('.conversation-name span:first-child').textContent.toLowerCase();
+
+        if (name.includes(query)) {
+            item.style.display = 'flex';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+}
+
+// Update user online status in conversations
+function updateUserOnlineStatus(userId, isOnline) {
+    // Update in conversations list
+    const convItems = document.querySelectorAll('.conversation-item');
+    convItems.forEach(item => {
+        if (item.onclick && item.onclick.toString().includes(userId)) {
+            const dot = item.querySelector('.online-dot');
+            if (dot) {
+                dot.classList.toggle('offline', !isOnline);
+            }
+        }
+    });
+
+    // Update in current chat header
+    if (currentChatPartner && currentChatPartner._id === userId) {
+        const headerDot = document.querySelector('.chat-header .online-dot');
+        const statusText = document.querySelector('.chat-user-status');
+        if (headerDot) {
+            headerDot.classList.toggle('offline', !isOnline);
+        }
+        if (statusText) {
+            statusText.textContent = isOnline ? 'Online' : 'Offline';
+            statusText.classList.toggle('online', isOnline);
+        }
+    }
+
+    // Update in user cards
+    const userCards = document.querySelectorAll(`[data-user-id="${userId}"] .online-indicator`);
+    userCards.forEach(indicator => {
+        indicator.style.display = isOnline ? 'block' : 'none';
+    });
+}
+
+// Mark messages as read visually
+function markMessagesAsRead() {
+    const messages = document.querySelectorAll('.message.sent');
+    messages.forEach(msg => {
+        // Could add read receipts visualization here
+    });
+}
+
+// Helper: Format message time
+function formatMessageTime(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+
+    // Less than a minute
+    if (diff < 60000) {
+        return 'Just now';
+    }
+
+    // Today - show time
+    if (date.toDateString() === now.toDateString()) {
+        return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+    }
+
+    // Yesterday
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+    }
+
+    // Within a week
+    if (diff < 7 * 24 * 60 * 60 * 1000) {
+        return date.toLocaleDateString('en-US', { weekday: 'short' });
+    }
+
+    // Older
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+// Helper: Format date divider
+function formatDateDivider(dateStr) {
+    const date = new Date(dateStr);
+    const now = new Date();
+
+    if (date.toDateString() === now.toDateString()) {
+        return 'Today';
+    }
+
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+    if (date.toDateString() === yesterday.toDateString()) {
+        return 'Yesterday';
+    }
+
+    return date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+}
+
+// Helper: Format last seen
+function formatLastSeen(dateStr) {
+    if (!dateStr) return 'Offline';
+
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diff = now - date;
+
+    if (diff < 60000) {
+        return 'Last seen just now';
+    }
+
+    if (diff < 3600000) {
+        const mins = Math.floor(diff / 60000);
+        return `Last seen ${mins} min ago`;
+    }
+
+    if (diff < 86400000) {
+        const hours = Math.floor(diff / 3600000);
+        return `Last seen ${hours}h ago`;
+    }
+
+    return `Last seen ${date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`;
+}
+
+// Helper: Truncate text
+function truncate(text, length) {
+    if (!text) return '';
+    return text.length > length ? text.substring(0, length) + '...' : text;
+}
+
+// Add message button to user cards
+function addMessageButton(userId) {
+    return `<button class="btn btn-secondary message-btn" onclick="event.stopPropagation(); startChatWith('${userId}')">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+        </svg>
+        Message
+    </button>`;
 }

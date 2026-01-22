@@ -134,6 +134,14 @@
                         </svg>
                         <span>Colleges</span>
                     </a>
+                    <a href="#" class="sidebar-link" data-tab="messages">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                        </svg>
+                        <span>Messages</span>
+                        <span class="badge" id="messageBadge">0</span>
+                    </a>
                     <a href="#" class="sidebar-link" data-tab="requests">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -326,6 +334,57 @@
 
                     <div class="colleges-grid" id="collegesGrid">
                         <!-- Colleges will be loaded here by JavaScript -->
+                    </div>
+                </div>
+
+                <!-- Messages Tab -->
+                <div class="tab-content" id="messagesTab">
+                    <div class="content-header">
+                        <h1>Messages</h1>
+                        <p>Chat with your connections in real-time</p>
+                    </div>
+
+                    <div class="messages-container">
+                        <!-- Conversations List -->
+                        <div class="conversations-list" id="conversationsList">
+                            <div class="conversations-header">
+                                <h3>Conversations</h3>
+                                <button class="btn btn-sm btn-primary" onclick="showNewMessageModal()">
+                                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="2">
+                                        <line x1="12" y1="5" x2="12" y2="19" />
+                                        <line x1="5" y1="12" x2="19" y2="12" />
+                                    </svg>
+                                    New
+                                </button>
+                            </div>
+                            <div class="conversations-search">
+                                <input type="text" placeholder="Search conversations..." id="conversationSearch"
+                                    onkeyup="filterConversations(event)">
+                            </div>
+                            <div class="conversations-items" id="conversationsItems">
+                                <div class="empty-state small">
+                                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                        stroke-width="1">
+                                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                    </svg>
+                                    <p>No conversations yet</p>
+                                    <span>Start chatting with your connections!</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Chat Area -->
+                        <div class="chat-area" id="chatArea">
+                            <div class="chat-placeholder">
+                                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                                    stroke-width="1">
+                                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                                </svg>
+                                <h3>Select a conversation</h3>
+                                <p>Choose a conversation from the list or start a new chat</p>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
@@ -569,6 +628,81 @@
         </div>
     </div>
 
+    <!-- New Message Modal -->
+    <div class="modal-overlay" id="newMessageModalOverlay" onclick="closeNewMessageModal()">
+        <div class="modal new-message-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>New Message</h2>
+                <button class="modal-close" onclick="closeNewMessageModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>Select a connection to message</label>
+                    <input type="text" id="connectionSearchInput" placeholder="Search connections..."
+                        onkeyup="filterConnectionsForChat(event)">
+                </div>
+                <div class="connections-list-modal" id="connectionsListModal">
+                    <!-- Connections will be listed here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chat Window Template (used when chat is active) -->
+    <template id="chatWindowTemplate">
+        <div class="chat-window">
+            <div class="chat-header">
+                <div class="chat-header-info">
+                    <div class="chat-avatar">
+                        <span class="avatar-initials"></span>
+                        <span class="online-dot"></span>
+                    </div>
+                    <div class="chat-user-info">
+                        <span class="chat-user-name"></span>
+                        <span class="chat-user-status"></span>
+                    </div>
+                </div>
+                <div class="chat-header-actions">
+                    <button class="icon-btn" onclick="viewChatProfile()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                            <circle cx="12" cy="7" r="4" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+            <div class="chat-messages" id="chatMessages">
+                <!-- Messages will be rendered here -->
+            </div>
+            <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                <span class="typing-text"></span>
+                <div class="typing-dots">
+                    <span></span>
+                    <span></span>
+                    <span></span>
+                </div>
+            </div>
+            <div class="chat-input-area">
+                <input type="text" id="messageInput" placeholder="Type a message..."
+                    onkeydown="handleMessageKeydown(event)">
+                <button class="send-btn" onclick="sendMessage()">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="22" y1="2" x2="11" y2="13" />
+                        <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                    </svg>
+                </button>
+            </div>
+        </div>
+    </template>
+
+    <!-- Socket.io Client -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <script src="js/collegesData.js"></script>
     <script src="js/dashboard.js"></script>
 </body>

@@ -7,6 +7,9 @@ const path = require('path');
 const compression = require('compression');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
+const http = require('http');
+const { Server } = require('socket.io');
+const jwt = require('jsonwebtoken');
 
 // Import routes
 const authRoutes = require('./routes/auth');
@@ -14,8 +17,14 @@ const userRoutes = require('./routes/users');
 const connectionRoutes = require('./routes/connections');
 const postRoutes = require('./routes/posts');
 const reviewRoutes = require('./routes/reviews');
+const chatRoutes = require('./routes/chat');
+
+// Import models
+const User = require('./models/User');
+const { Message, Conversation } = require('./models/Message');
 
 const app = express();
+const server = http.createServer(app);
 
 // Trust proxy (for Render/Railway)
 app.set('trust proxy', 1);
@@ -55,6 +64,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/reviews', reviewRoutes);
+app.use('/api/chat', chatRoutes);
 
 // Health check endpoint (for Render)
 app.get('/health', (req, res) => {
@@ -64,6 +74,241 @@ app.get('/health', (req, res) => {
 // Serve frontend for all other routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'frontend', 'index.html'));
+});
+
+// Socket.io setup
+const io = new Server(server, {
+    cors: {
+        origin: process.env.NODE_ENV === 'production'
+            ? `https://${process.env.DOMAIN}`
+            : 'http://localhost:3000',
+        credentials: true
+    }
+});
+
+// Store connected users
+const connectedUsers = new Map();
+
+// Socket.io authentication middleware
+io.use(async (socket, next) => {
+    try {
+        const token = socket.handshake.auth.token;
+        if (!token) {
+            return next(new Error('Authentication error'));
+        }
+
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const user = await User.findById(decoded.id).select('-password');
+
+        if (!user) {
+            return next(new Error('User not found'));
+        }
+
+        socket.user = user;
+        next();
+    } catch (error) {
+        next(new Error('Authentication error'));
+    }
+});
+
+// Socket.io connection handler
+io.on('connection', async (socket) => {
+    const userId = socket.user._id.toString();
+    console.log(`🔌 User connected: ${socket.user.firstName} ${socket.user.lastName}`);
+
+    // Store socket connection
+    connectedUsers.set(userId, socket.id);
+
+    // Update user online status
+    await User.findByIdAndUpdate(userId, {
+        isOnline: true,
+        lastSeen: new Date()
+    });
+
+    // Notify connections that user is online
+    socket.user.connections.forEach(connectionId => {
+        const connectionSocketId = connectedUsers.get(connectionId.toString());
+        if (connectionSocketId) {
+            io.to(connectionSocketId).emit('user_online', { userId });
+        }
+    });
+
+    // Join user to their own room for direct messages
+    socket.join(userId);
+
+    // Handle sending messages
+    socket.on('send_message', async (data) => {
+        try {
+            const { recipientId, content, conversationId } = data;
+
+            // Verify users are connected
+            if (!socket.user.connections.includes(recipientId)) {
+                socket.emit('error', { message: 'You can only message your connections' });
+                return;
+            }
+
+            // Find or create conversation
+            let conversation;
+            if (conversationId) {
+                conversation = await Conversation.findById(conversationId);
+            } else {
+                conversation = await Conversation.findOrCreateConversation(userId, recipientId);
+            }
+
+            // Create message
+            const message = await Message.create({
+                conversation: conversation._id,
+                sender: userId,
+                content: content.trim(),
+                readBy: [{ user: userId, readAt: new Date() }]
+            });
+
+            // Update conversation
+            const currentUnread = conversation.unreadCount.get(recipientId) || 0;
+            await Conversation.findByIdAndUpdate(conversation._id, {
+                lastMessage: message._id,
+                lastMessageAt: new Date(),
+                $set: { [`unreadCount.${recipientId}`]: currentUnread + 1 }
+            });
+
+            // Populate sender info
+            await message.populate('sender', 'firstName lastName profilePicture');
+
+            const messageData = {
+                _id: message._id,
+                conversation: conversation._id,
+                sender: message.sender,
+                content: message.content,
+                createdAt: message.createdAt
+            };
+
+            // Send to recipient if online
+            const recipientSocketId = connectedUsers.get(recipientId);
+            if (recipientSocketId) {
+                io.to(recipientSocketId).emit('new_message', messageData);
+            }
+
+            // Confirm to sender
+            socket.emit('message_sent', messageData);
+
+        } catch (error) {
+            console.error('Socket send message error:', error);
+            socket.emit('error', { message: 'Failed to send message' });
+        }
+    });
+
+    // Handle typing indicator
+    socket.on('typing_start', (data) => {
+        const { recipientId, conversationId } = data;
+        const recipientSocketId = connectedUsers.get(recipientId);
+        if (recipientSocketId) {
+            io.to(recipientSocketId).emit('user_typing', {
+                conversationId,
+                userId,
+                userName: `${socket.user.firstName}`
+            });
+        }
+    });
+
+    socket.on('typing_stop', (data) => {
+        const { recipientId, conversationId } = data;
+        const recipientSocketId = connectedUsers.get(recipientId);
+        if (recipientSocketId) {
+            io.to(recipientSocketId).emit('user_stopped_typing', {
+                conversationId,
+                userId
+            });
+        }
+    });
+
+    // Handle message read
+    socket.on('mark_read', async (data) => {
+        const { conversationId } = data;
+        try {
+            await Message.updateMany(
+                {
+                    conversation: conversationId,
+                    sender: { $ne: userId },
+                    'readBy.user': { $ne: userId }
+                },
+                {
+                    $push: {
+                        readBy: { user: userId, readAt: new Date() }
+                    }
+                }
+            );
+
+            await Conversation.findByIdAndUpdate(conversationId, {
+                $set: { [`unreadCount.${userId}`]: 0 }
+            });
+
+            // Notify sender that messages were read
+            const conversation = await Conversation.findById(conversationId);
+            const otherUserId = conversation.participants.find(
+                p => p.toString() !== userId
+            ).toString();
+
+            const otherSocketId = connectedUsers.get(otherUserId);
+            if (otherSocketId) {
+                io.to(otherSocketId).emit('messages_read', { conversationId, readBy: userId });
+            }
+        } catch (error) {
+            console.error('Mark read error:', error);
+        }
+    });
+
+    // Handle connection request notifications
+    socket.on('connection_request', (data) => {
+        const { targetUserId } = data;
+        const targetSocketId = connectedUsers.get(targetUserId);
+        if (targetSocketId) {
+            io.to(targetSocketId).emit('new_connection_request', {
+                from: {
+                    _id: socket.user._id,
+                    firstName: socket.user.firstName,
+                    lastName: socket.user.lastName,
+                    collegeName: socket.user.collegeName
+                }
+            });
+        }
+    });
+
+    // Handle connection accepted notifications
+    socket.on('connection_accepted', (data) => {
+        const { requesterId } = data;
+        const requesterSocketId = connectedUsers.get(requesterId);
+        if (requesterSocketId) {
+            io.to(requesterSocketId).emit('connection_accepted_notification', {
+                by: {
+                    _id: socket.user._id,
+                    firstName: socket.user.firstName,
+                    lastName: socket.user.lastName,
+                    collegeName: socket.user.collegeName
+                }
+            });
+        }
+    });
+
+    // Handle disconnect
+    socket.on('disconnect', async () => {
+        console.log(`🔌 User disconnected: ${socket.user.firstName} ${socket.user.lastName}`);
+
+        connectedUsers.delete(userId);
+
+        // Update user offline status
+        await User.findByIdAndUpdate(userId, {
+            isOnline: false,
+            lastSeen: new Date()
+        });
+
+        // Notify connections that user is offline
+        socket.user.connections.forEach(connectionId => {
+            const connectionSocketId = connectedUsers.get(connectionId.toString());
+            if (connectionSocketId) {
+                io.to(connectionSocketId).emit('user_offline', { userId });
+            }
+        });
+    });
 });
 
 // Handle MongoDB connection events
@@ -95,9 +340,10 @@ const startServer = async () => {
 
         // Start server only after DB connection is established
         const PORT = process.env.PORT || 3000;
-        app.listen(PORT, '0.0.0.0', () => {
+        server.listen(PORT, '0.0.0.0', () => {
             console.log(`🚀 CollEra server running on port ${PORT}`);
             console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+            console.log(`💬 Socket.io enabled for real-time chat`);
         });
     } catch (err) {
         console.error('❌ MongoDB connection error:', err);
@@ -107,4 +353,4 @@ const startServer = async () => {
 
 startServer();
 
-module.exports = app;
+module.exports = { app, server, io };
