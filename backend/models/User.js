@@ -42,9 +42,21 @@ const userSchema = new mongoose.Schema({
         min: 1,
         max: 6
     },
+    branch: {
+        type: String,
+        trim: true
+    },
     bio: {
         type: String,
         maxlength: 500
+    },
+    dob: {
+        type: Date
+    },
+    pronouns: {
+        type: String,
+        enum: ['he/him', 'she/her', 'they/them', 'other', ''],
+        default: ''
     },
     skills: [{
         type: String,

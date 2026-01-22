@@ -111,9 +111,9 @@ router.get('/:id', protect, async (req, res) => {
 router.put('/profile', protect, async (req, res) => {
     try {
         const allowedFields = [
-            'firstName', 'lastName', 'name', 'course', 'year',
+            'firstName', 'lastName', 'name', 'course', 'year', 'branch',
             'bio', 'skills', 'interests', 'linkedIn', 'linkedin',
-            'github', 'portfolio', 'profilePicture'
+            'github', 'portfolio', 'profilePicture', 'dob', 'pronouns'
         ];
 
         const updates = {};
@@ -126,6 +126,8 @@ router.put('/profile', protect, async (req, res) => {
                     updates.lastName = nameParts.slice(1).join(' ') || '';
                 } else if (field === 'linkedin') {
                     updates.linkedIn = req.body[field];
+                } else if (field === 'dob' && req.body[field]) {
+                    updates.dob = new Date(req.body[field]);
                 } else {
                     updates[field] = req.body[field];
                 }

@@ -680,28 +680,88 @@ function showEditProfile() {
     document.querySelector('.user-menu').classList.remove('active');
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
+    const dobValue = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
+    
     showModal('Edit Profile', `
         <form id="editProfileForm" class="edit-profile-form">
-            <div class="form-group">
-                <label>Name</label>
-                <input type="text" id="editName" value="${user.name || ''}" placeholder="Your name">
+            <div class="profile-picture-section">
+                <div class="profile-picture-preview" id="profilePicturePreview">
+                    ${user.profilePicture ? `<img src="${user.profilePicture}" alt="Profile">` : `<span>${user.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>`}
+                </div>
+                <div class="profile-picture-upload">
+                    <label for="profilePictureInput" class="btn btn-secondary btn-sm">Change Photo</label>
+                    <input type="file" id="profilePictureInput" accept="image/*" style="display: none;" onchange="handleProfilePictureChange(event)">
+                    <p class="upload-hint">JPG, PNG or GIF. Max 2MB</p>
+                </div>
             </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="editName" value="${user.name || ''}" placeholder="Your full name">
+                </div>
+                <div class="form-group">
+                    <label>Pronouns</label>
+                    <select id="editPronouns">
+                        <option value="" ${!user.pronouns ? 'selected' : ''}>Select pronouns</option>
+                        <option value="he/him" ${user.pronouns === 'he/him' ? 'selected' : ''}>He/Him</option>
+                        <option value="she/her" ${user.pronouns === 'she/her' ? 'selected' : ''}>She/Her</option>
+                        <option value="they/them" ${user.pronouns === 'they/them' ? 'selected' : ''}>They/Them</option>
+                        <option value="other" ${user.pronouns === 'other' ? 'selected' : ''}>Other</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Date of Birth</label>
+                    <input type="date" id="editDob" value="${dobValue}">
+                </div>
+                <div class="form-group">
+                    <label>Year</label>
+                    <select id="editYear">
+                        <option value="" ${!user.year ? 'selected' : ''}>Select year</option>
+                        <option value="1" ${user.year === 1 ? 'selected' : ''}>1st Year</option>
+                        <option value="2" ${user.year === 2 ? 'selected' : ''}>2nd Year</option>
+                        <option value="3" ${user.year === 3 ? 'selected' : ''}>3rd Year</option>
+                        <option value="4" ${user.year === 4 ? 'selected' : ''}>4th Year</option>
+                        <option value="5" ${user.year === 5 ? 'selected' : ''}>5th Year</option>
+                        <option value="6" ${user.year === 6 ? 'selected' : ''}>6th Year</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>Branch / Department</label>
+                <input type="text" id="editBranch" value="${user.branch || ''}" placeholder="e.g., Computer Science, Mechanical Engineering">
+            </div>
+            
             <div class="form-group">
                 <label>Bio</label>
                 <textarea id="editBio" placeholder="Tell us about yourself" rows="3">${user.bio || ''}</textarea>
             </div>
+            
             <div class="form-group">
                 <label>Skills (comma-separated)</label>
                 <input type="text" id="editSkills" value="${user.skills ? user.skills.join(', ') : ''}" placeholder="e.g., JavaScript, Python, Design">
             </div>
+            
             <div class="form-group">
-                <label>LinkedIn URL</label>
-                <input type="url" id="editLinkedin" value="${user.linkedin || ''}" placeholder="https://linkedin.com/in/yourprofile">
+                <label>Areas of Interest (comma-separated)</label>
+                <input type="text" id="editInterests" value="${user.interests ? user.interests.join(', ') : ''}" placeholder="e.g., AI, Web Development, Data Science">
             </div>
-            <div class="form-group">
-                <label>GitHub URL</label>
-                <input type="url" id="editGithub" value="${user.github || ''}" placeholder="https://github.com/yourusername">
+            
+            <div class="form-row">
+                <div class="form-group">
+                    <label>LinkedIn URL</label>
+                    <input type="url" id="editLinkedin" value="${user.linkedin || ''}" placeholder="https://linkedin.com/in/...">
+                </div>
+                <div class="form-group">
+                    <label>GitHub URL</label>
+                    <input type="url" id="editGithub" value="${user.github || ''}" placeholder="https://github.com/...">
+                </div>
             </div>
+            
             <button type="submit" class="btn btn-primary btn-full">Save Changes</button>
         </form>
     `);
@@ -715,29 +775,65 @@ function showEditProfile() {
     }, 100);
 }
 
+let profilePictureBase64 = null;
+
+function handleProfilePictureChange(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+        showToast('Image size should be less than 2MB', 'error');
+        return;
+    }
+    
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        profilePictureBase64 = e.target.result;
+        const preview = document.getElementById('profilePicturePreview');
+        preview.innerHTML = `<img src="${profilePictureBase64}" alt="Profile">`;
+    };
+    reader.readAsDataURL(file);
+}
+
 async function handleEditProfile(e) {
     e.preventDefault();
 
     const name = document.getElementById('editName').value;
     const bio = document.getElementById('editBio').value;
     const skills = document.getElementById('editSkills').value.split(',').map(s => s.trim()).filter(s => s);
+    const interests = document.getElementById('editInterests').value.split(',').map(s => s.trim()).filter(s => s);
     const linkedin = document.getElementById('editLinkedin').value;
     const github = document.getElementById('editGithub').value;
+    const pronouns = document.getElementById('editPronouns').value;
+    const dob = document.getElementById('editDob').value;
+    const year = document.getElementById('editYear').value ? parseInt(document.getElementById('editYear').value) : null;
+    const branch = document.getElementById('editBranch').value;
+    const profilePicture = profilePictureBase64 || undefined;
 
-    const data = await apiCall('/api/users/profile', 'PUT', {
-        name, bio, skills, linkedin, github
-    });
+    const updateData = { name, bio, skills, interests, linkedin, github, pronouns, dob, year, branch };
+    if (profilePicture) {
+        updateData.profilePicture = profilePicture;
+    }
+
+    const data = await apiCall('/api/users/profile', 'PUT', updateData);
 
     if (data && data.success) {
         // Update local storage
         const user = JSON.parse(localStorage.getItem('user') || '{}');
-        Object.assign(user, { name, bio, skills, linkedin, github });
+        Object.assign(user, { name, bio, skills, interests, linkedin, github, pronouns, dob, year, branch });
+        if (profilePicture) {
+            user.profilePicture = profilePicture;
+        }
         localStorage.setItem('user', JSON.stringify(user));
 
         // Update UI
         document.getElementById('userName').textContent = name;
         document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
         document.getElementById('postUserAvatar').textContent = name.charAt(0).toUpperCase();
+        
+        // Reset profile picture state
+        profilePictureBase64 = null;
 
         closeModal();
         showToast('Profile updated successfully!', 'success');
