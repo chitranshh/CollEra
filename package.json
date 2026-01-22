@@ -1,0 +1,20 @@
+{
+    "name": "collera",
+    "version": "1.0.0",
+    "description": "CollEra - College Student Networking App for India",
+    "scripts": {
+        "start": "cd backend && npm start",
+        "dev": "cd backend && npm run dev",
+        "install:backend": "cd backend && npm install",
+        "install:frontend": "cd frontend && npm install",
+        "install:all": "npm run install:backend && npm run install:frontend"
+    },
+    "keywords": [
+        "college",
+        "networking",
+        "students",
+        "india"
+    ],
+    "author": "CollEra Team",
+    "license": "MIT"
+}

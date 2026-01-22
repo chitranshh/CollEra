@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verification Failed - CollEra</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Space+Grotesk:wght@400;500;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="icon" type="image/svg+xml"
+        href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎓</text></svg>">
+    <style>
+        .verification-page {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+        }
+
+        .verification-content {
+            text-align: center;
+            max-width: 500px;
+            animation: fadeInUp 0.6s ease;
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .verification-icon {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 56px;
+            background: linear-gradient(135deg, #ef4444, #dc2626);
+        }
+
+        .verification-content h1 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 42px;
+            margin-bottom: 16px;
+            color: #ef4444;
+        }
+
+        .verification-content p {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            margin-bottom: 40px;
+            line-height: 1.6;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="animated-bg">
+        <div class="gradient-orb orb-1"></div>
+        <div class="gradient-orb orb-2"></div>
+    </div>
+
+    <div class="verification-page">
+        <div class="verification-content">
+            <div class="verification-icon">✕</div>
+            <h1>Verification Failed</h1>
+            <p>The verification link is invalid or has expired. This could happen if the link has already been used or
+                if it's been more than 24 hours since you registered.</p>
+            <div class="action-buttons">
+                <a href="/" class="btn btn-primary btn-lg">
+                    <span>Go to Homepage</span>
+                </a>
+                <button class="btn btn-secondary btn-lg" onclick="showResendForm()">
+                    <span>Resend Email</span>
+                </button>
+            </div>
+
+            <div id="resendForm" style="display: none; margin-top: 32px;">
+                <div class="form-group" style="max-width: 400px; margin: 0 auto;">
+                    <input type="email" id="resendEmail" placeholder="Enter your college email"
+                        style="padding: 14px 16px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white; width: 100%; font-size: 15px;">
+                </div>
+                <button class="btn btn-primary" style="margin-top: 16px;" onclick="resendVerification()">
+                    Send Verification Email
+                </button>
+                <p id="resendMessage" style="margin-top: 16px; font-size: 14px;"></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function showResendForm() {
+            document.getElementById('resendForm').style.display = 'block';
+        }
+
+        async function resendVerification() {
+            const email = document.getElementById('resendEmail').value;
+            const messageEl = document.getElementById('resendMessage');
+
+            if (!email) {
+                messageEl.style.color = '#ef4444';
+                messageEl.textContent = 'Please enter your email address';
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/auth/resend-verification', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    messageEl.style.color = '#22c55e';
+                    messageEl.textContent = 'Verification email sent! Please check your inbox.';
+                } else {
+                    messageEl.style.color = '#ef4444';
+                    messageEl.textContent = data.message;
+                }
+            } catch (error) {
+                messageEl.style.color = '#ef4444';
+                messageEl.textContent = 'Something went wrong. Please try again.';
+            }
+        }
+    </script>
+</body>
+
+</html>

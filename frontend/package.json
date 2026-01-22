@@ -1,0 +1,17 @@
+{
+    "name": "collera-frontend",
+    "version": "1.0.0",
+    "description": "CollEra Frontend - College Student Networking App",
+    "scripts": {
+        "serve": "npx serve -l 5000"
+    },
+    "keywords": [
+        "college",
+        "networking",
+        "students",
+        "india",
+        "frontend"
+    ],
+    "author": "CollEra Team",
+    "license": "MIT"
+}

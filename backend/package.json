@@ -1,0 +1,36 @@
+{
+    "name": "collera",
+    "version": "1.0.0",
+    "description": "CollEra - College Student Networking App for India",
+    "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "dev": "nodemon server.js",
+        "build": "echo 'Build complete'"
+    },
+    "keywords": [
+        "college",
+        "networking",
+        "students",
+        "india"
+    ],
+    "author": "CollEra Team",
+    "license": "MIT",
+    "dependencies": {
+        "bcryptjs": "^2.4.3",
+        "compression": "^1.8.1",
+        "cookie-parser": "^1.4.6",
+        "cors": "^2.8.5",
+        "dotenv": "^16.3.1",
+        "express": "^4.18.2",
+        "express-rate-limit": "^8.2.1",
+        "helmet": "^8.1.0",
+        "jsonwebtoken": "^9.0.2",
+        "mongoose": "^8.0.3",
+        "nodemailer": "^6.9.7",
+        "uuid": "^9.0.1"
+    },
+    "devDependencies": {
+        "nodemon": "^3.0.2"
+    }
+}
