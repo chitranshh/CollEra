@@ -190,6 +190,17 @@ router.delete('/account', protect, async (req, res) => {
             }
         );
 
+        // Delete all messages sent by this user
+        const { Message, Conversation } = require('../models/Message');
+        await Message.deleteMany({ sender: userId });
+
+        // Delete all conversations involving this user
+        await Conversation.deleteMany({ participants: userId });
+
+        // Delete all reviews by this user
+        const Review = require('../models/Review');
+        await Review.deleteMany({ user: userId });
+
         // Delete the user
         await User.findByIdAndDelete(userId);
 

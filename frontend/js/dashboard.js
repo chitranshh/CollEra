@@ -934,27 +934,58 @@ function showDeleteAccount() {
     showModal('Delete Account', `
         <div class="delete-account-warning">
             <div class="warning-icon">⚠️</div>
-            <h3>Are you sure?</h3>
-            <p>This action cannot be undone. All your data, posts, and connections will be permanently deleted.</p>
+            <h3>Are you sure you want to delete your account?</h3>
+            <p>This action <strong>cannot be undone</strong>. All your data, posts, connections, and messages will be <strong>permanently deleted</strong>.</p>
+            <div class="confirm-delete-input">
+                <label>Type <strong>DELETE</strong> to confirm:</label>
+                <input type="text" id="deleteConfirmInput" placeholder="Type DELETE here" autocomplete="off">
+            </div>
             <div class="delete-account-actions">
                 <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
-                <button class="btn btn-danger" onclick="confirmDeleteAccount()">Delete My Account</button>
+                <button class="btn btn-danger" id="deleteAccountBtn" onclick="confirmDeleteAccount()" disabled>Delete My Account</button>
             </div>
         </div>
     `);
+
+    // Enable delete button only when user types DELETE
+    const input = document.getElementById('deleteConfirmInput');
+    const deleteBtn = document.getElementById('deleteAccountBtn');
+
+    input.addEventListener('input', () => {
+        if (input.value.toUpperCase() === 'DELETE') {
+            deleteBtn.disabled = false;
+            deleteBtn.classList.add('enabled');
+        } else {
+            deleteBtn.disabled = true;
+            deleteBtn.classList.remove('enabled');
+        }
+    });
 }
 
 async function confirmDeleteAccount() {
+    const input = document.getElementById('deleteConfirmInput');
+    if (input.value.toUpperCase() !== 'DELETE') {
+        showToast('Please type DELETE to confirm', 'error');
+        return;
+    }
+
+    const deleteBtn = document.getElementById('deleteAccountBtn');
+    deleteBtn.disabled = true;
+    deleteBtn.innerHTML = '<span class="spinner"></span> Deleting...';
+
     const data = await apiCall('/api/users/account', 'DELETE');
 
     if (data && data.success) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
+        closeModal();
         showToast('Account deleted successfully', 'success');
         setTimeout(() => {
             window.location.href = '/';
         }, 1500);
     } else {
+        deleteBtn.disabled = false;
+        deleteBtn.innerHTML = 'Delete My Account';
         showToast(data?.message || 'Failed to delete account', 'error');
     }
 }
