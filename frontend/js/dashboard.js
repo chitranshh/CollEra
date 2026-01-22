@@ -549,7 +549,8 @@ function handleExploreSearch(event) {
 }
 
 // ===== User Menu =====
-function toggleUserMenu() {
+function toggleUserMenu(event) {
+    if (event) event.stopPropagation();
     const menu = document.querySelector('.user-menu');
     const dropdown = document.getElementById('userDropdown');
 
@@ -562,7 +563,7 @@ document.addEventListener('click', (e) => {
     const menu = document.querySelector('.user-menu');
     const dropdown = document.getElementById('userDropdown');
 
-    if (!menu.contains(e.target)) {
+    if (menu && dropdown && !menu.contains(e.target)) {
         menu.classList.remove('active');
         dropdown.classList.remove('active');
     }
