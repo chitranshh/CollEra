@@ -441,20 +441,15 @@ function checkAuthState() {
 
 function updateNavForLoggedInUser(user) {
     const navLinks = document.getElementById('navLinks');
-    const loginLink = navLinks.querySelector('a[onclick="showLogin()"]');
-    const registerLink = navLinks.querySelector('a[onclick="showRegister()"]');
 
-    if (loginLink) {
-        loginLink.textContent = 'Dashboard';
-        loginLink.href = '/dashboard';
-        loginLink.removeAttribute('onclick');
-    }
-
-    if (registerLink) {
-        registerLink.textContent = user.firstName;
-        registerLink.href = '/profile';
-        registerLink.removeAttribute('onclick');
-    }
+    // Replace entire nav with logged-in user navigation
+    navLinks.innerHTML = `
+        <a href="/dashboard" class="nav-link">Home</a>
+        <a href="/dashboard#explore" class="nav-link">Explore</a>
+        <a href="/dashboard#colleges" class="nav-link">Colleges</a>
+        <a href="/dashboard#requests" class="nav-link">Requests</a>
+        <a href="/dashboard" class="btn btn-primary nav-btn">${user.firstName}</a>
+    `;
 }
 
 // ===== Public Colleges Section =====
