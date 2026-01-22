@@ -63,13 +63,34 @@ app.get('*', (req, res) => {
 });
 
 // Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/collera')
+mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/collera', {
+    serverSelectionTimeoutMS: 30000, // 30 seconds for server selection
+    socketTimeoutMS: 45000,          // 45 seconds for socket operations
+    connectTimeoutMS: 30000,         // 30 seconds for initial connection
+    maxPoolSize: 10,                 // Maximum connection pool size
+    minPoolSize: 2,                  // Minimum connection pool size
+    retryWrites: true,
+    retryReads: true,
+})
     .then(() => {
         console.log('✅ Connected to MongoDB');
     })
     .catch((err) => {
         console.error('❌ MongoDB connection error:', err);
     });
+
+// Handle MongoDB connection events
+mongoose.connection.on('error', (err) => {
+    console.error('❌ MongoDB error:', err);
+});
+
+mongoose.connection.on('disconnected', () => {
+    console.log('⚠️ MongoDB disconnected. Attempting to reconnect...');
+});
+
+mongoose.connection.on('reconnected', () => {
+    console.log('✅ MongoDB reconnected');
+});
 
 // Start server
 const PORT = process.env.PORT || 3000;
