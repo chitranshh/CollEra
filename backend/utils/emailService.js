@@ -15,7 +15,17 @@ const createTransporter = () => {
             pass: process.env.EMAIL_PASS
         },
         debug: true,
-        logger: true
+        logger: true,
+        // Timeout settings to prevent buffering timeout
+        connectionTimeout: 10000, // 10 seconds to establish connection
+        greetingTimeout: 10000,   // 10 seconds for server greeting
+        socketTimeout: 30000,     // 30 seconds for socket inactivity
+        // Pool settings for better connection management
+        pool: true,
+        maxConnections: 5,
+        maxMessages: 100,
+        rateDelta: 1000,
+        rateLimit: 5
     });
 };
 
