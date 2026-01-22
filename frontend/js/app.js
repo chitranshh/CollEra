@@ -441,12 +441,14 @@ document.addEventListener('mousemove', (e) => {
 
 // ===== Check Auth State on Load =====
 function checkAuthState() {
+    // Auth redirect is handled by the IIFE at the top of the file
+    // This function now only handles UI updates for edge cases
     const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
 
-    if (token && user) {
-        // User is logged in - redirect to dashboard immediately
-        window.location.href = '/dashboard';
+    // If somehow still on landing page while logged in, redirect
+    if (token && user && window.location.pathname === '/') {
+        window.location.replace('/dashboard');
         return;
     }
 }
