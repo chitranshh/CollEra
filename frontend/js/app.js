@@ -169,11 +169,15 @@ async function handleLogin(event) {
     const form = event.target;
     const btn = form.querySelector('button[type="submit"]');
     const messageDiv = document.getElementById('loginMessage');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = loadingOverlay.querySelector('.loading-text');
 
     const email = form.email.value;
     const password = form.password.value;
 
-    // Show loading state
+    // Show loading overlay
+    loadingText.textContent = 'Signing you in...';
+    loadingOverlay.classList.add('active');
     btn.classList.add('loading');
     btn.disabled = true;
 
@@ -187,6 +191,9 @@ async function handleLogin(event) {
         });
 
         const data = await response.json();
+
+        // Hide loading overlay
+        loadingOverlay.classList.remove('active');
 
         if (data.success) {
             messageDiv.className = 'form-message success';
@@ -209,6 +216,7 @@ async function handleLogin(event) {
             }
         }
     } catch (error) {
+        loadingOverlay.classList.remove('active');
         messageDiv.className = 'form-message error';
         messageDiv.textContent = 'Network error. Please try again.';
     } finally {
@@ -223,6 +231,8 @@ async function handleRegister(event) {
     const form = event.target;
     const btn = form.querySelector('button[type="submit"]');
     const messageDiv = document.getElementById('registerMessage');
+    const loadingOverlay = document.getElementById('loadingOverlay');
+    const loadingText = loadingOverlay.querySelector('.loading-text');
 
     const formData = {
         firstName: form.firstName.value,
@@ -241,7 +251,9 @@ async function handleRegister(event) {
         return;
     }
 
-    // Show loading state
+    // Show loading overlay
+    loadingText.textContent = 'Creating your account...';
+    loadingOverlay.classList.add('active');
     btn.classList.add('loading');
     btn.disabled = true;
 
@@ -256,6 +268,9 @@ async function handleRegister(event) {
 
         const data = await response.json();
 
+        // Hide loading overlay
+        loadingOverlay.classList.remove('active');
+
         if (data.success) {
             messageDiv.className = 'form-message success';
             messageDiv.textContent = 'Registration successful! Please check your email to verify your account.';
@@ -265,6 +280,7 @@ async function handleRegister(event) {
             messageDiv.textContent = data.message;
         }
     } catch (error) {
+        loadingOverlay.classList.remove('active');
         messageDiv.className = 'form-message error';
         messageDiv.textContent = 'Network error. Please try again.';
     } finally {
