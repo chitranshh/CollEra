@@ -112,6 +112,7 @@
     border-radius: 50px;
     cursor: pointer;
     transition: all var(--transition-fast);
+    position: relative;
 }
 
 .user-menu:hover {
@@ -149,8 +150,8 @@
 .user-dropdown {
     position: absolute;
     top: calc(100% + 8px);
-    right: 24px;
-    width: 200px;
+    right: 0;
+    width: 220px;
     background: #1a1a24;
     border: 1px solid var(--border-color);
     border-radius: 16px;
@@ -160,6 +161,7 @@
     transform: translateY(-10px);
     transition: all var(--transition-normal);
     z-index: 1001;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
 }
 
 .user-dropdown.active {
