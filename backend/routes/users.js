@@ -276,7 +276,7 @@ router.get('/college/:collegeName', protect, async (req, res) => {
         // Create flexible search query for college name
         const collegeWords = collegeName.split(/\s+/).filter(w => w.length > 2);
         const regexPattern = collegeWords.map(word => `(?=.*${word})`).join('');
-        
+
         const query = {
             isVerified: true,
             collegeName: new RegExp(regexPattern, 'i')

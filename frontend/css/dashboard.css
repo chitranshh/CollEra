@@ -2373,11 +2373,11 @@
         flex-direction: column;
         text-align: center;
     }
-    
+
     .members-list {
         grid-template-columns: 1fr;
     }
-    
+
     .members-header {
         flex-direction: column;
         gap: 12px;

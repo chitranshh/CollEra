@@ -1377,7 +1377,7 @@ function resetReviewForm() {
 
 async function openCollegeDetails(encodedName, type, location, score, established, rank) {
     const name = decodeURIComponent(encodedName);
-    currentViewingCollege = { name, type, location, score, established, rank };
+    currentViewingCollege = { name, type, location, score, established, rank, membersPage: 1 };
 
     const typeIcons = { engineering: '🏛️', management: '📊', medical: '🏥', university: '🎓' };
 
@@ -1425,8 +1425,121 @@ async function openCollegeDetails(encodedName, type, location, score, establishe
     // Show modal
     document.getElementById('collegeDetailsOverlay').style.display = 'flex';
 
+    // Load college members first
+    await loadCollegeMembers(name);
+
     // Load reviews
     await loadCollegeReviews(name);
+}
+
+// College Members
+let collegeMembersData = [];
+
+async function loadCollegeMembers(collegeName, page = 1) {
+    const membersList = document.getElementById('collegeMembersList');
+    const membersCount = document.getElementById('collegeMembersCount');
+    const loadMoreBtn = document.getElementById('loadMoreMembers');
+    const tagsSection = document.getElementById('collegeSkillsTags');
+
+    if (page === 1) {
+        membersList.innerHTML = '<div class="loading-spinner small"><div class="spinner"></div></div>';
+        collegeMembersData = [];
+    }
+
+    const data = await apiCall(`/api/users/college/${encodeURIComponent(collegeName)}?page=${page}&limit=6`);
+
+    if (data && data.success) {
+        const { users, total, pagination } = data.data;
+
+        // Update count
+        membersCount.textContent = `${total} member${total !== 1 ? 's' : ''}`;
+
+        if (page === 1) {
+            collegeMembersData = users;
+        } else {
+            collegeMembersData = [...collegeMembersData, ...users];
+        }
+
+        if (collegeMembersData.length > 0) {
+            membersList.innerHTML = collegeMembersData.map(user => createMemberCard(user)).join('');
+
+            // Show/hide load more
+            if (pagination.page < pagination.pages) {
+                loadMoreBtn.style.display = 'block';
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+
+            // Extract and display popular skills
+            const skillsMap = {};
+            collegeMembersData.forEach(user => {
+                (user.skills || []).forEach(skill => {
+                    skillsMap[skill] = (skillsMap[skill] || 0) + 1;
+                });
+            });
+
+            const sortedSkills = Object.entries(skillsMap)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            if (sortedSkills.length > 0) {
+                tagsSection.innerHTML = sortedSkills.map(([skill, count]) => `
+                    <span class="college-skill-tag">
+                        ${skill}
+                        <span class="count">${count}</span>
+                    </span>
+                `).join('');
+                document.getElementById('collegeTagsSection').style.display = 'block';
+            } else {
+                document.getElementById('collegeTagsSection').style.display = 'none';
+            }
+        } else {
+            membersList.innerHTML = `
+                <div class="members-empty">
+                    <p>No students from this college on CollEra yet</p>
+                </div>
+            `;
+            loadMoreBtn.style.display = 'none';
+            document.getElementById('collegeTagsSection').style.display = 'none';
+        }
+
+        // Update current viewing college page
+        if (currentViewingCollege) {
+            currentViewingCollege.membersPage = page;
+        }
+    } else {
+        membersList.innerHTML = '<p class="text-muted">Unable to load members</p>';
+    }
+}
+
+function createMemberCard(user) {
+    const initials = `${user.firstName?.charAt(0) || ''}${user.lastName?.charAt(0) || ''}`;
+    const fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+    const courseYear = user.course ? `${user.course}${user.year ? ' • Year ' + user.year : ''}` : '';
+    const onlineDot = user.isOnline ? '<span class="member-online-dot"></span>' : '';
+
+    return `
+        <div class="member-card" onclick="viewMemberProfile('${user._id}')">
+            <div class="member-avatar">${initials || 'U'}</div>
+            <div class="member-info">
+                <div class="member-name">${fullName || 'User'}</div>
+                <div class="member-course">${courseYear || 'Student'}</div>
+            </div>
+            ${onlineDot}
+        </div>
+    `;
+}
+
+function viewMemberProfile(userId) {
+    // For now, show a toast - you can implement profile modal later
+    showToast('Profile view coming soon!', 'info');
+}
+
+async function loadMoreCollegeMembers() {
+    if (currentViewingCollege) {
+        const nextPage = (currentViewingCollege.membersPage || 1) + 1;
+        await loadCollegeMembers(currentViewingCollege.name, nextPage);
+    }
 }
 
 function closeCollegeDetails() {
