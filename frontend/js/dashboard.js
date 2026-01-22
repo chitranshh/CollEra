@@ -128,10 +128,23 @@ async function loadUsers() {
         params.append('skills', currentSkillFilter);
     }
 
+    // Apply filter based on currentFilter
+    if (currentFilter === 'same-college' && currentUser?.collegeName) {
+        params.append('college', currentUser.collegeName);
+    }
+
     const data = await apiCall(`/api/users?${params}`);
 
     if (data && data.success) {
-        users = data.data.users;
+        let filteredUsers = data.data.users;
+
+        // For nearby colleges filter, we'll show users from different colleges in same city/region
+        if (currentFilter === 'nearby' && currentUser?.collegeName) {
+            // Extract city/location from college name or show all except same college
+            filteredUsers = data.data.users.filter(u => u.collegeName !== currentUser.collegeName);
+        }
+
+        users = filteredUsers;
         renderUsers();
 
         // Show/hide load more button
@@ -142,6 +155,21 @@ async function loadUsers() {
             loadMoreBtn.style.display = 'none';
         }
     }
+}
+
+// Filter users by category
+function filterUsers(filter) {
+    // Update active state
+    document.querySelectorAll('.filter-tag').forEach(tag => {
+        tag.classList.remove('active');
+        if (tag.dataset.filter === filter) {
+            tag.classList.add('active');
+        }
+    });
+
+    currentFilter = filter;
+    currentPage = 1;
+    loadUsers();
 }
 
 function renderUsers() {
@@ -476,16 +504,6 @@ function initTabNavigation() {
 
 // ===== Filters =====
 function initFilters() {
-    // Filter tags
-    document.querySelectorAll('.filter-tag').forEach(tag => {
-        tag.addEventListener('click', () => {
-            document.querySelectorAll('.filter-tag').forEach(t => t.classList.remove('active'));
-            tag.classList.add('active');
-            currentFilter = tag.dataset.filter;
-            loadUsers();
-        });
-    });
-
     // Skill tags
     document.querySelectorAll('.skill-tag').forEach(tag => {
         tag.addEventListener('click', () => {

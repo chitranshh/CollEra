@@ -232,8 +232,12 @@
                                 onkeyup="handleExploreSearch(event)">
                         </div>
                         <div class="filter-tags">
-                            <button class="filter-tag active" data-filter="all">All</button>
-                            <button class="filter-tag" data-filter="same-college">Same College</button>
+                            <button class="filter-tag active" data-filter="all" onclick="filterUsers('all')">All
+                                Students</button>
+                            <button class="filter-tag" data-filter="same-college"
+                                onclick="filterUsers('same-college')">Same College</button>
+                            <button class="filter-tag" data-filter="nearby" onclick="filterUsers('nearby')">Nearby
+                                Colleges</button>
                         </div>
                     </div>
 
