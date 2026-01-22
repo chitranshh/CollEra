@@ -1366,7 +1366,6 @@ function renderColleges() {
 }
 
 function createCollegeCard(college) {
-    const rankClass = college.rank <= 10 ? 'top-10' : college.rank <= 25 ? 'top-25' : '';
     const typeIcons = {
         engineering: '🏛️',
         management: '📊',
@@ -1382,15 +1381,10 @@ function createCollegeCard(college) {
     );
     const yourCollegeBadge = isUserCollege ? '<span class="your-college-badge">✓ Your College</span>' : '';
 
-    // Handle colleges with and without NIRF data
-    const hasNirfData = college.score !== null;
-    const scoreDisplay = hasNirfData ? college.score : '—';
-    const establishedDisplay = college.established || '—';
     const locationDisplay = college.location || 'India';
 
     return `
-        <div class="college-card" onclick="openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${locationDisplay}', ${college.score || 0}, ${college.established || 0}, ${college.rank})">
-            <div class="college-rank ${rankClass}">${hasNirfData ? '#' + college.rank : ''}</div>
+        <div class="college-card" onclick="openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${locationDisplay}')">
             <div class="college-icon">${typeIcons[college.type] || '🏫'}</div>
             <h3 class="college-name">${college.name}${yourCollegeBadge}</h3>
             <div class="college-location">
@@ -1401,19 +1395,7 @@ function createCollegeCard(college) {
                 ${locationDisplay}
             </div>
             <span class="college-type ${college.type}">${college.type.charAt(0).toUpperCase() + college.type.slice(1)}</span>
-            ${hasNirfData ? `
-            <div class="college-stats">
-                <div class="college-stat">
-                    <span class="college-stat-value">${scoreDisplay}</span>
-                    <span class="college-stat-label">NIRF Score</span>
-                </div>
-                <div class="college-stat">
-                    <span class="college-stat-value">${establishedDisplay}</span>
-                    <span class="college-stat-label">Established</span>
-                </div>
-            </div>
-            ` : ''}
-            <button class="view-reviews-btn" onclick="event.stopPropagation(); openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${locationDisplay}', ${college.score || 0}, ${college.established || 0}, ${college.rank})">
+            <button class="view-reviews-btn" onclick="event.stopPropagation(); openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${locationDisplay}')">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
@@ -1524,9 +1506,9 @@ function resetReviewForm() {
     if (contentInput) contentInput.value = '';
 }
 
-async function openCollegeDetails(encodedName, type, location, score, established, rank) {
+async function openCollegeDetails(encodedName, type, location) {
     const name = decodeURIComponent(encodedName);
-    currentViewingCollege = { name, type, location, score, established, rank, membersPage: 1 };
+    currentViewingCollege = { name, type, location, membersPage: 1 };
 
     const typeIcons = { engineering: '🏛️', management: '📊', medical: '🏥', university: '🎓' };
 
@@ -1546,17 +1528,6 @@ async function openCollegeDetails(encodedName, type, location, score, establishe
         <div class="college-details-info">
             <h3>${name}</h3>
             <p>📍 ${location}</p>
-            <p>📅 Established: ${established}</p>
-            <div class="college-details-stats">
-                <div class="college-details-stat">
-                    <div class="college-details-stat-value">#${rank}</div>
-                    <div class="college-details-stat-label">NIRF Rank</div>
-                </div>
-                <div class="college-details-stat">
-                    <div class="college-details-stat-value">${score}</div>
-                    <div class="college-details-stat-label">Score</div>
-                </div>
-            </div>
         </div>
     `;
 

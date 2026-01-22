@@ -568,7 +568,7 @@ function renderPublicColleges() {
     }
 
     grid.innerHTML = displayColleges.map(college => `
-        <div class="public-college-card" onclick="openPublicCollegeReviews('${college.name}', ${college.rank}, '${currentPublicCategory}')">
+        <div class="public-college-card" onclick="openPublicCollegeReviews('${college.name}', '${currentPublicCategory}')">
             <div class="public-college-info">
                 <h3>${college.name}</h3>
                 <div class="public-college-action">
@@ -582,13 +582,14 @@ function renderPublicColleges() {
     `).join('');
 }
 
-async function openPublicCollegeReviews(collegeName, rank, category) {
+async function openPublicCollegeReviews(collegeName, category) {
     const modal = document.getElementById('publicReviewModal');
     const overlay = document.getElementById('modalOverlay');
 
     // Update modal header
     document.getElementById('publicCollegeName').textContent = collegeName;
-    document.getElementById('publicCollegeRank').textContent = `#${rank} NIRF`;
+    const rankEl = document.getElementById('publicCollegeRank');
+    if (rankEl) rankEl.style.display = 'none';
     document.getElementById('publicCollegeCategory').textContent = category.charAt(0).toUpperCase() + category.slice(1);
 
     // Show modal
