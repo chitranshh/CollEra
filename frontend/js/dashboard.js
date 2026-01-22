@@ -1743,6 +1743,24 @@ function createReviewItem(review) {
     `;
 }
 
+// Open review modal for user's own college (from sidebar)
+function openMyCollegeReview() {
+    if (!currentUser?.collegeName) {
+        showToast('Please complete your profile with college name first', 'error');
+        return;
+    }
+
+    // Set current viewing college to user's college
+    currentViewingCollege = { name: currentUser.collegeName };
+
+    resetReviewForm();
+    document.getElementById('reviewCollegeName').textContent = currentUser.collegeName;
+    document.getElementById('reviewModalOverlay').style.display = 'flex';
+
+    // Re-initialize star ratings
+    setTimeout(initStarRatings, 100);
+}
+
 function openReviewModal() {
     if (!currentViewingCollege) return;
 

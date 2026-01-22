@@ -1,5 +1,16 @@
 // ===== CollEra App JavaScript =====
 
+// ===== IMMEDIATE AUTH CHECK - Redirect logged-in users =====
+(function () {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+
+    // If user is logged in and on landing page, redirect to dashboard
+    if (token && user && window.location.pathname === '/') {
+        window.location.replace('/dashboard');
+    }
+})();
+
 // ===== Hero Cards Shuffle =====
 const heroProfiles = [
     { initials: 'SM', name: 'Shashwat Mishra', college: 'Graphic Era University', gradient: 'gradient-bg' },
