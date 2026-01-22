@@ -111,15 +111,24 @@ router.get('/:id', protect, async (req, res) => {
 router.put('/profile', protect, async (req, res) => {
     try {
         const allowedFields = [
-            'firstName', 'lastName', 'course', 'year',
-            'bio', 'skills', 'interests', 'linkedIn',
+            'firstName', 'lastName', 'name', 'course', 'year',
+            'bio', 'skills', 'interests', 'linkedIn', 'linkedin',
             'github', 'portfolio', 'profilePicture'
         ];
 
         const updates = {};
         allowedFields.forEach(field => {
             if (req.body[field] !== undefined) {
-                updates[field] = req.body[field];
+                // Handle name field - split into firstName and lastName
+                if (field === 'name') {
+                    const nameParts = req.body[field].split(' ');
+                    updates.firstName = nameParts[0] || '';
+                    updates.lastName = nameParts.slice(1).join(' ') || '';
+                } else if (field === 'linkedin') {
+                    updates.linkedIn = req.body[field];
+                } else {
+                    updates[field] = req.body[field];
+                }
             }
         });
 
@@ -140,6 +149,57 @@ router.put('/profile', protect, async (req, res) => {
         res.status(500).json({
             success: false,
             message: 'Failed to update profile'
+        });
+    }
+});
+
+// @route   DELETE /api/users/account
+// @desc    Delete user account permanently
+// @access  Private
+router.delete('/account', protect, async (req, res) => {
+    try {
+        const userId = req.user._id;
+
+        // Remove user from all other users' connections, pendingConnections, sentRequests
+        await User.updateMany(
+            {},
+            {
+                $pull: {
+                    connections: userId,
+                    pendingConnections: userId,
+                    sentRequests: userId
+                }
+            }
+        );
+
+        // Delete all posts by this user
+        const Post = require('../models/Post');
+        await Post.deleteMany({ author: userId });
+
+        // Remove user's likes and comments from other posts
+        await Post.updateMany(
+            {},
+            {
+                $pull: {
+                    likes: userId,
+                    comments: { author: userId }
+                }
+            }
+        );
+
+        // Delete the user
+        await User.findByIdAndDelete(userId);
+
+        res.json({
+            success: true,
+            message: 'Account deleted successfully'
+        });
+
+    } catch (error) {
+        console.error('Delete account error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to delete account'
         });
     }
 });

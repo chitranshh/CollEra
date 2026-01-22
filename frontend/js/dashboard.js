@@ -647,9 +647,198 @@ function showNotifications() {
     document.getElementById('requestsTab').classList.add('active');
 }
 
-// ===== Show Settings =====
-function showSettings() {
-    alert('Settings page coming soon!');
+// ===== Profile Menu Functions =====
+function showMyAccount() {
+    // Close the dropdown
+    document.getElementById('userDropdown').classList.remove('active');
+    document.querySelector('.user-menu').classList.remove('active');
+    
+    // Show My Account modal
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    showModal('My Account', `
+        <div class="account-info">
+            <div class="account-avatar">${user.name ? user.name.charAt(0).toUpperCase() : 'U'}</div>
+            <div class="account-details">
+                <h3>${user.name || 'User'}</h3>
+                <p class="account-email">${user.email || 'No email'}</p>
+                <p class="account-college">${user.college || 'No college'}</p>
+                <p class="account-year">Year: ${user.year || 'N/A'}</p>
+                <p class="account-joined">Joined: ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</p>
+            </div>
+        </div>
+    `);
+}
+
+function showEditProfile() {
+    // Close the dropdown
+    document.getElementById('userDropdown').classList.remove('active');
+    document.querySelector('.user-menu').classList.remove('active');
+    
+    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    showModal('Edit Profile', `
+        <form id="editProfileForm" class="edit-profile-form">
+            <div class="form-group">
+                <label>Name</label>
+                <input type="text" id="editName" value="${user.name || ''}" placeholder="Your name">
+            </div>
+            <div class="form-group">
+                <label>Bio</label>
+                <textarea id="editBio" placeholder="Tell us about yourself" rows="3">${user.bio || ''}</textarea>
+            </div>
+            <div class="form-group">
+                <label>Skills (comma-separated)</label>
+                <input type="text" id="editSkills" value="${user.skills ? user.skills.join(', ') : ''}" placeholder="e.g., JavaScript, Python, Design">
+            </div>
+            <div class="form-group">
+                <label>LinkedIn URL</label>
+                <input type="url" id="editLinkedin" value="${user.linkedin || ''}" placeholder="https://linkedin.com/in/yourprofile">
+            </div>
+            <div class="form-group">
+                <label>GitHub URL</label>
+                <input type="url" id="editGithub" value="${user.github || ''}" placeholder="https://github.com/yourusername">
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">Save Changes</button>
+        </form>
+    `);
+    
+    // Add form submit handler
+    setTimeout(() => {
+        const form = document.getElementById('editProfileForm');
+        if (form) {
+            form.addEventListener('submit', handleEditProfile);
+        }
+    }, 100);
+}
+
+async function handleEditProfile(e) {
+    e.preventDefault();
+    
+    const name = document.getElementById('editName').value;
+    const bio = document.getElementById('editBio').value;
+    const skills = document.getElementById('editSkills').value.split(',').map(s => s.trim()).filter(s => s);
+    const linkedin = document.getElementById('editLinkedin').value;
+    const github = document.getElementById('editGithub').value;
+    
+    const data = await apiCall('/api/users/profile', 'PUT', {
+        name, bio, skills, linkedin, github
+    });
+    
+    if (data && data.success) {
+        // Update local storage
+        const user = JSON.parse(localStorage.getItem('user') || '{}');
+        Object.assign(user, { name, bio, skills, linkedin, github });
+        localStorage.setItem('user', JSON.stringify(user));
+        
+        // Update UI
+        document.getElementById('userName').textContent = name;
+        document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
+        document.getElementById('postUserAvatar').textContent = name.charAt(0).toUpperCase();
+        
+        closeModal();
+        showToast('Profile updated successfully!', 'success');
+    } else {
+        showToast(data?.message || 'Failed to update profile', 'error');
+    }
+}
+
+function showHelpCenter() {
+    // Close the dropdown
+    document.getElementById('userDropdown').classList.remove('active');
+    document.querySelector('.user-menu').classList.remove('active');
+    
+    showModal('Help Center', `
+        <div class="help-center">
+            <div class="help-section">
+                <h4>📧 Contact Support</h4>
+                <p>Email us at <a href="mailto:support@collera.in">support@collera.in</a></p>
+            </div>
+            <div class="help-section">
+                <h4>❓ FAQs</h4>
+                <div class="faq-item">
+                    <strong>How do I connect with other students?</strong>
+                    <p>Go to the Explore tab to find students and send connection requests.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>How do I create a post?</strong>
+                    <p>Click on "What's on your mind?" in the Home Feed to create a new post.</p>
+                </div>
+                <div class="faq-item">
+                    <strong>How do I edit my profile?</strong>
+                    <p>Click on your profile menu and select "Edit Profile".</p>
+                </div>
+            </div>
+            <div class="help-section">
+                <h4>📚 About CollEra</h4>
+                <p>CollEra is a platform that connects college students across India for collaboration, networking, and knowledge sharing.</p>
+            </div>
+        </div>
+    `);
+}
+
+function showDeleteAccount() {
+    // Close the dropdown
+    document.getElementById('userDropdown').classList.remove('active');
+    document.querySelector('.user-menu').classList.remove('active');
+    
+    showModal('Delete Account', `
+        <div class="delete-account-warning">
+            <div class="warning-icon">⚠️</div>
+            <h3>Are you sure?</h3>
+            <p>This action cannot be undone. All your data, posts, and connections will be permanently deleted.</p>
+            <div class="delete-account-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+                <button class="btn btn-danger" onclick="confirmDeleteAccount()">Delete My Account</button>
+            </div>
+        </div>
+    `);
+}
+
+async function confirmDeleteAccount() {
+    const data = await apiCall('/api/users/account', 'DELETE');
+    
+    if (data && data.success) {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        showToast('Account deleted successfully', 'success');
+        setTimeout(() => {
+            window.location.href = '/';
+        }, 1500);
+    } else {
+        showToast(data?.message || 'Failed to delete account', 'error');
+    }
+}
+
+// ===== Modal Helper Functions =====
+function showModal(title, content) {
+    // Remove existing modal if any
+    closeModal();
+    
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.id = 'genericModal';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>${title}</h2>
+                <button class="modal-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body">
+                ${content}
+            </div>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+    
+    // Close on overlay click
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) closeModal();
+    });
+}
+
+function closeModal() {
+    const modal = document.getElementById('genericModal');
+    if (modal) modal.remove();
 }
 
 // ===== Posts/Feed Functions =====
