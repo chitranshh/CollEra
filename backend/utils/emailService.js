@@ -6,26 +6,28 @@ const createTransporter = () => {
     console.log('📧 Email User:', process.env.EMAIL_USER);
     console.log('📧 Email Host:', process.env.EMAIL_HOST);
 
+    const port = parseInt(process.env.EMAIL_PORT) || 587;
+    const secure = port === 465; // true for 465, false for 587
+
     return nodemailer.createTransport({
         host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT),
-        secure: process.env.EMAIL_SECURE === 'true', // true for 465, false for 587
+        port: port,
+        secure: secure,
         auth: {
             user: process.env.EMAIL_USER,
             pass: process.env.EMAIL_PASS
         },
         debug: true,
         logger: true,
-        // Timeout settings to prevent buffering timeout
-        connectionTimeout: 10000, // 10 seconds to establish connection
-        greetingTimeout: 10000,   // 10 seconds for server greeting
-        socketTimeout: 30000,     // 30 seconds for socket inactivity
-        // Pool settings for better connection management
-        pool: true,
-        maxConnections: 5,
-        maxMessages: 100,
-        rateDelta: 1000,
-        rateLimit: 5
+        // Increased timeout settings for cloud environments
+        connectionTimeout: 30000, // 30 seconds to establish connection
+        greetingTimeout: 30000,   // 30 seconds for server greeting
+        socketTimeout: 60000,     // 60 seconds for socket inactivity
+        // TLS settings for port 587
+        tls: {
+            rejectUnauthorized: false,
+            minVersion: 'TLSv1.2'
+        }
     });
 };
 
