@@ -12,6 +12,7 @@ const rateLimit = require('express-rate-limit');
 const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const connectionRoutes = require('./routes/connections');
+const postRoutes = require('./routes/posts');
 
 const app = express();
 
@@ -51,6 +52,7 @@ app.use(express.static(path.join(__dirname, '..', 'frontend')));
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/connections', connectionRoutes);
+app.use('/api/posts', postRoutes);
 
 // Health check endpoint (for Render)
 app.get('/health', (req, res) => {

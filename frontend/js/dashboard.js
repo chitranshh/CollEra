@@ -6,7 +6,9 @@ let users = [];
 let connections = [];
 let pendingRequests = [];
 let sentRequests = [];
+let posts = [];
 let currentPage = 1;
+let postsPage = 1;
 let currentFilter = 'all';
 let currentSkillFilter = '';
 
@@ -24,6 +26,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
     // Load initial data
     await Promise.all([
+        loadPosts(),
         loadUsers(),
         loadConnections(),
         loadPendingRequests(),
@@ -624,4 +627,247 @@ function showNotifications() {
 // ===== Show Settings =====
 function showSettings() {
     alert('Settings page coming soon!');
+}
+
+// ===== Posts/Feed Functions =====
+async function loadPosts() {
+    const data = await apiCall(`/api/posts?page=${postsPage}&limit=10`);
+
+    if (data && data.success) {
+        posts = data.data.posts;
+        renderPosts();
+
+        // Show/hide load more button
+        const loadMoreBtn = document.getElementById('loadMorePosts');
+        if (loadMoreBtn) {
+            if (data.data.pagination.page < data.data.pagination.pages) {
+                loadMoreBtn.style.display = 'block';
+            } else {
+                loadMoreBtn.style.display = 'none';
+            }
+        }
+    }
+}
+
+function renderPosts() {
+    const feed = document.getElementById('postsFeed');
+
+    if (!feed) return;
+
+    if (posts.length === 0) {
+        feed.innerHTML = `
+            <div class="empty-feed">
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                </svg>
+                <h3>No posts yet</h3>
+                <p>Be the first to share something with your network!</p>
+            </div>
+        `;
+        return;
+    }
+
+    feed.innerHTML = posts.map(post => createPostCard(post)).join('');
+}
+
+function createPostCard(post) {
+    const author = post.author;
+    const initials = `${author.firstName[0]}${author.lastName[0]}`.toUpperCase();
+    const isLiked = post.likes.includes(currentUser?._id);
+    const timeAgo = getTimeAgo(post.createdAt);
+
+    return `
+        <div class="post-card" data-post-id="${post._id}">
+            <div class="post-header">
+                <div class="post-avatar">${initials}</div>
+                <div class="post-author-details">
+                    <span class="post-author-name">${author.firstName} ${author.lastName}</span>
+                    <span class="post-author-info-line">${author.collegeName}${author.course ? ` • ${author.course}` : ''}</span>
+                    <span class="post-time">${timeAgo}</span>
+                </div>
+            </div>
+            <div class="post-content">${escapeHtml(post.content)}</div>
+            <div class="post-stats">
+                <span class="post-stat">${post.likes.length} ${post.likes.length === 1 ? 'like' : 'likes'}</span>
+                <span class="post-stat">${post.comments.length} ${post.comments.length === 1 ? 'comment' : 'comments'}</span>
+            </div>
+            <div class="post-actions">
+                <button class="post-action ${isLiked ? 'liked' : ''}" onclick="toggleLike('${post._id}')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/>
+                    </svg>
+                    <span>Like</span>
+                </button>
+                <button class="post-action" onclick="toggleComments('${post._id}')">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
+                    </svg>
+                    <span>Comment</span>
+                </button>
+            </div>
+            <div class="post-comments" id="comments-${post._id}" style="display: none;">
+                <div class="comment-input-wrapper">
+                    <input type="text" class="comment-input" id="comment-input-${post._id}" placeholder="Write a comment...">
+                    <button class="comment-submit" onclick="submitComment('${post._id}')">Post</button>
+                </div>
+                <div class="comments-list" id="comments-list-${post._id}">
+                    ${post.comments.map(comment => createCommentHtml(comment)).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function createCommentHtml(comment) {
+    const user = comment.user;
+    const initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    const timeAgo = getTimeAgo(comment.createdAt);
+
+    return `
+        <div class="comment-item">
+            <div class="comment-avatar">${initials}</div>
+            <div class="comment-content">
+                <span class="comment-author">${user.firstName} ${user.lastName}</span>
+                <p class="comment-text">${escapeHtml(comment.content)}</p>
+                <span class="comment-time">${timeAgo}</span>
+            </div>
+        </div>
+    `;
+}
+
+function getTimeAgo(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const seconds = Math.floor((now - date) / 1000);
+
+    if (seconds < 60) return 'Just now';
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    return date.toLocaleDateString();
+}
+
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+async function toggleLike(postId) {
+    const data = await apiCall(`/api/posts/${postId}/like`, 'POST');
+
+    if (data && data.success) {
+        // Update UI
+        const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+        const likeBtn = postCard.querySelector('.post-action');
+        const statsSpan = postCard.querySelector('.post-stat');
+
+        if (data.data.isLiked) {
+            likeBtn.classList.add('liked');
+        } else {
+            likeBtn.classList.remove('liked');
+        }
+
+        statsSpan.textContent = `${data.data.likes} ${data.data.likes === 1 ? 'like' : 'likes'}`;
+    }
+}
+
+function toggleComments(postId) {
+    const commentsSection = document.getElementById(`comments-${postId}`);
+    if (commentsSection.style.display === 'none') {
+        commentsSection.style.display = 'block';
+        document.getElementById(`comment-input-${postId}`).focus();
+    } else {
+        commentsSection.style.display = 'none';
+    }
+}
+
+async function submitComment(postId) {
+    const input = document.getElementById(`comment-input-${postId}`);
+    const content = input.value.trim();
+
+    if (!content) return;
+
+    const data = await apiCall(`/api/posts/${postId}/comment`, 'POST', { content });
+
+    if (data && data.success) {
+        const commentsList = document.getElementById(`comments-list-${postId}`);
+        commentsList.innerHTML += createCommentHtml(data.data.comment);
+        input.value = '';
+
+        // Update comment count
+        const postCard = document.querySelector(`[data-post-id="${postId}"]`);
+        const statsSpans = postCard.querySelectorAll('.post-stat');
+        const commentCount = document.querySelectorAll(`#comments-list-${postId} .comment-item`).length;
+        statsSpans[1].textContent = `${commentCount} ${commentCount === 1 ? 'comment' : 'comments'}`;
+    }
+}
+
+// ===== Create Post Modal =====
+function openCreatePostModal() {
+    const overlay = document.getElementById('postModalOverlay');
+    overlay.classList.add('active');
+    document.body.style.overflow = 'hidden';
+
+    // Update modal user info
+    if (currentUser) {
+        const initials = `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase();
+        document.getElementById('modalUserAvatar').textContent = initials;
+        document.getElementById('postUserAvatar').textContent = initials;
+        document.getElementById('modalUserName').textContent = `${currentUser.firstName} ${currentUser.lastName}`;
+        document.getElementById('modalUserCollege').textContent = currentUser.collegeName;
+    }
+
+    setTimeout(() => {
+        document.getElementById('postContent').focus();
+    }, 100);
+}
+
+function closePostModal() {
+    const overlay = document.getElementById('postModalOverlay');
+    overlay.classList.remove('active');
+    document.body.style.overflow = '';
+    document.getElementById('postContent').value = '';
+}
+
+async function submitPost() {
+    const content = document.getElementById('postContent').value.trim();
+    const btn = document.getElementById('submitPostBtn');
+
+    if (!content) {
+        showToast('Please write something to post', 'error');
+        return;
+    }
+
+    btn.classList.add('loading');
+    btn.disabled = true;
+
+    const data = await apiCall('/api/posts', 'POST', { content });
+
+    btn.classList.remove('loading');
+    btn.disabled = false;
+
+    if (data && data.success) {
+        closePostModal();
+        showToast('Post created successfully!', 'success');
+        // Add new post to the top of the feed
+        posts.unshift(data.data.post);
+        renderPosts();
+    } else {
+        showToast(data?.message || 'Error creating post', 'error');
+    }
+}
+
+async function loadMorePosts() {
+    postsPage++;
+    const data = await apiCall(`/api/posts?page=${postsPage}&limit=10`);
+
+    if (data && data.success) {
+        posts = [...posts, ...data.data.posts];
+        renderPosts();
+
+        if (data.data.pagination.page >= data.data.pagination.pages) {
+            document.getElementById('loadMorePosts').style.display = 'none';
+        }
+    }
 }
