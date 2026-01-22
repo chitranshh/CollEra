@@ -1,51 +1,21 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
 
-// Create transporter
-const createTransporter = () => {
-    console.log('📧 Creating email transporter...');
-    console.log('📧 Email User:', process.env.EMAIL_USER);
-    console.log('📧 Email Host:', process.env.EMAIL_HOST);
-
-    const port = parseInt(process.env.EMAIL_PORT) || 587;
-    const secure = port === 465; // true for 465, false for 587
-
-    return nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: port,
-        secure: secure,
-        auth: {
-            user: process.env.EMAIL_USER,
-            pass: process.env.EMAIL_PASS
-        },
-        debug: true,
-        logger: true,
-        // Increased timeout settings for cloud environments
-        connectionTimeout: 30000, // 30 seconds to establish connection
-        greetingTimeout: 30000,   // 30 seconds for server greeting
-        socketTimeout: 60000,     // 60 seconds for socket inactivity
-        // TLS settings for port 587
-        tls: {
-            rejectUnauthorized: false,
-            minVersion: 'TLSv1.2'
-        }
-    });
+// Initialize Resend client
+const getResendClient = () => {
+    return new Resend(process.env.RESEND_API_KEY);
 };
 
 // Send verification email
 const sendVerificationEmail = async (email, token, firstName) => {
-    const transporter = createTransporter();
+    const resend = getResendClient();
     const verificationUrl = `${process.env.APP_URL}/api/auth/verify/${token}`;
 
-    const mailOptions = {
-        from: `"CollEra" <${process.env.EMAIL_USER}>`,
+    console.log('📧 Sending verification email to:', email);
+
+    const { data, error } = await resend.emails.send({
+        from: 'CollEra <no-reply@collera.in>',
         to: email,
         subject: 'Verify Your CollEra Account',
-        headers: {
-            'X-Priority': '1',
-            'X-Mailer': 'CollEra Mailer',
-            'List-Unsubscribe': `<mailto:${process.env.EMAIL_USER}?subject=unsubscribe>`
-        },
-        text: `Hi ${firstName},\n\nWelcome to CollEra! Please verify your email by clicking the link below:\n\n${verificationUrl}\n\nThis link expires in 24 hours.\n\nBest regards,\nThe CollEra Team\nhttps://collera.in`,
         html: `
             <!DOCTYPE html>
             <html>
@@ -112,17 +82,25 @@ const sendVerificationEmail = async (email, token, firstName) => {
             </body>
             </html>
         `
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
+    if (error) {
+        console.error('❌ Email sending failed:', error);
+        throw new Error(error.message);
+    }
+
+    console.log('✅ Verification email sent:', data.id);
+    return data;
 };
 
 // Send welcome email after verification
 const sendWelcomeEmail = async (email, firstName) => {
-    const transporter = createTransporter();
+    const resend = getResendClient();
 
-    const mailOptions = {
-        from: `"CollEra" <${process.env.EMAIL_USER}>`,
+    console.log('📧 Sending welcome email to:', email);
+
+    const { data, error } = await resend.emails.send({
+        from: 'CollEra <no-reply@collera.in>',
         to: email,
         subject: '🎉 Welcome to CollEra - You\'re In!',
         html: `
@@ -176,18 +154,26 @@ const sendWelcomeEmail = async (email, firstName) => {
             </body>
             </html>
         `
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
+    if (error) {
+        console.error('❌ Welcome email failed:', error);
+        throw new Error(error.message);
+    }
+
+    console.log('✅ Welcome email sent:', data.id);
+    return data;
 };
 
 // Send password reset email
 const sendPasswordResetEmail = async (email, token, firstName) => {
-    const transporter = createTransporter();
+    const resend = getResendClient();
     const resetUrl = `${process.env.APP_URL}/reset-password?token=${token}`;
 
-    const mailOptions = {
-        from: `"CollEra" <${process.env.EMAIL_USER}>`,
+    console.log('📧 Sending password reset email to:', email);
+
+    const { data, error } = await resend.emails.send({
+        from: 'CollEra <no-reply@collera.in>',
         to: email,
         subject: '🔐 Reset Your CollEra Password',
         html: `
@@ -231,9 +217,15 @@ const sendPasswordResetEmail = async (email, token, firstName) => {
             </body>
             </html>
         `
-    };
+    });
 
-    await transporter.sendMail(mailOptions);
+    if (error) {
+        console.error('❌ Password reset email failed:', error);
+        throw new Error(error.message);
+    }
+
+    console.log('✅ Password reset email sent:', data.id);
+    return data;
 };
 
 module.exports = {

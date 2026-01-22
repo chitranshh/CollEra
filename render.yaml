@@ -15,13 +15,7 @@ services:
         sync: false
       - key: JWT_SECRET
         sync: false
-      - key: EMAIL_HOST
-        value: smtp.zoho.in
-      - key: EMAIL_PORT
-        value: 587
-      - key: EMAIL_USER
-        sync: false
-      - key: EMAIL_PASS
+      - key: RESEND_API_KEY
         sync: false
       - key: APP_URL
         sync: false
