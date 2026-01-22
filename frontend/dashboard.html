@@ -388,6 +388,168 @@
         </div>
     </div>
 
+    <!-- College Review Modal -->
+    <div class="modal-overlay" id="reviewModalOverlay" onclick="closeReviewModal()">
+        <div class="modal review-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2>Review Your College</h2>
+                <button class="modal-close" onclick="closeReviewModal()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="review-college-name" id="reviewCollegeName"></p>
+
+                <div class="rating-section">
+                    <label>Overall Rating</label>
+                    <div class="star-rating" id="overallRating">
+                        <span class="star" data-value="1">★</span>
+                        <span class="star" data-value="2">★</span>
+                        <span class="star" data-value="3">★</span>
+                        <span class="star" data-value="4">★</span>
+                        <span class="star" data-value="5">★</span>
+                    </div>
+                </div>
+
+                <div class="specific-ratings">
+                    <div class="rating-row">
+                        <label>Academics</label>
+                        <div class="star-rating small" data-category="academics">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+                    <div class="rating-row">
+                        <label>Faculty</label>
+                        <div class="star-rating small" data-category="faculty">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+                    <div class="rating-row">
+                        <label>Infrastructure</label>
+                        <div class="star-rating small" data-category="infrastructure">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+                    <div class="rating-row">
+                        <label>Placements</label>
+                        <div class="star-rating small" data-category="placements">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+                    <div class="rating-row">
+                        <label>Campus Life</label>
+                        <div class="star-rating small" data-category="campusLife">
+                            <span class="star" data-value="1">★</span>
+                            <span class="star" data-value="2">★</span>
+                            <span class="star" data-value="3">★</span>
+                            <span class="star" data-value="4">★</span>
+                            <span class="star" data-value="5">★</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewTitle">Review Title</label>
+                    <input type="text" id="reviewTitle" placeholder="Summarize your experience" maxlength="100">
+                </div>
+
+                <div class="form-group">
+                    <label for="reviewContent">Your Review</label>
+                    <textarea id="reviewContent"
+                        placeholder="Share your experience about academics, faculty, placements, campus life..."
+                        rows="5" maxlength="2000"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeReviewModal()">Cancel</button>
+                <button class="btn btn-primary" onclick="submitReview()" id="submitReviewBtn">Submit Review</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- College Details Modal -->
+    <div class="modal-overlay" id="collegeDetailsOverlay" onclick="closeCollegeDetails()">
+        <div class="modal college-details-modal" onclick="event.stopPropagation()">
+            <div class="modal-header">
+                <h2 id="collegeDetailsName">College Name</h2>
+                <button class="modal-close" onclick="closeCollegeDetails()">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18" />
+                        <line x1="6" y1="6" x2="18" y2="18" />
+                    </svg>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="college-details-header" id="collegeDetailsHeader">
+                    <!-- College info loaded here -->
+                </div>
+                
+                <!-- College Members Section -->
+                <div class="college-members-section" id="collegeMembersSection">
+                    <div class="members-header">
+                        <h3>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                                <circle cx="9" cy="7" r="4" />
+                                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+                            </svg>
+                            Students on CollEra
+                        </h3>
+                        <span class="members-count" id="collegeMembersCount">0 members</span>
+                    </div>
+                    <div class="members-list" id="collegeMembersList">
+                        <!-- Members loaded here -->
+                    </div>
+                    <button class="btn btn-secondary btn-sm load-more-members" id="loadMoreMembers" style="display: none;" onclick="loadMoreCollegeMembers()">
+                        Load More
+                    </button>
+                </div>
+                
+                <!-- College Tags Section -->
+                <div class="college-tags-section" id="collegeTagsSection">
+                    <h3>Popular Skills</h3>
+                    <div class="college-tags" id="collegeSkillsTags">
+                        <!-- Skills tags loaded here -->
+                    </div>
+                </div>
+
+                <div class="college-reviews-section">
+                    <div class="reviews-header">
+                        <h3>Student Reviews</h3>
+                        <button class="btn btn-primary btn-sm" id="writeReviewBtn" onclick="openReviewModal()">Write
+                            Review</button>
+                    </div>
+                    <div class="reviews-summary" id="reviewsSummary">
+                        <!-- Reviews summary loaded here -->
+                    </div>
+                    <div class="reviews-list" id="reviewsList">
+                        <!-- Reviews loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script src="js/dashboard.js"></script>
 </body>
 

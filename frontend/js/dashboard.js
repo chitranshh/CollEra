@@ -434,7 +434,7 @@ function initTabNavigation() {
                 tab.classList.remove('active');
             });
             document.getElementById(`${tabId}Tab`).classList.add('active');
-            
+
             // Load colleges when switching to colleges tab
             if (tabId === 'colleges') {
                 renderColleges();
@@ -1101,7 +1101,7 @@ const nirfColleges = [
     { rank: 8, name: "Indian Institute of Technology Guwahati", location: "Guwahati, Assam", type: "engineering", category: "overall", score: 71.77, established: 1994 },
     { rank: 9, name: "All India Institute of Medical Sciences", location: "New Delhi", type: "medical", category: "overall", score: 70.89, established: 1956 },
     { rank: 10, name: "Jawaharlal Nehru University", location: "New Delhi", type: "university", category: "overall", score: 69.47, established: 1969 },
-    
+
     // Engineering Colleges
     { rank: 11, name: "National Institute of Technology Tiruchirappalli", location: "Tiruchirappalli, Tamil Nadu", type: "engineering", category: "engineering", score: 68.54, established: 1964 },
     { rank: 12, name: "Indian Institute of Technology Hyderabad", location: "Hyderabad, Telangana", type: "engineering", category: "engineering", score: 67.89, established: 2008 },
@@ -1123,7 +1123,7 @@ const nirfColleges = [
     { rank: 28, name: "College of Engineering Pune", location: "Pune, Maharashtra", type: "engineering", category: "engineering", score: 58.45, established: 1854 },
     { rank: 29, name: "SRM Institute of Science and Technology", location: "Chennai, Tamil Nadu", type: "engineering", category: "engineering", score: 57.89, established: 1985 },
     { rank: 30, name: "PSG College of Technology", location: "Coimbatore, Tamil Nadu", type: "engineering", category: "engineering", score: 57.34, established: 1951 },
-    
+
     // Management Colleges
     { rank: 1, name: "Indian Institute of Management Ahmedabad", location: "Ahmedabad, Gujarat", type: "management", category: "management", score: 89.25, established: 1961 },
     { rank: 2, name: "Indian Institute of Management Bangalore", location: "Bengaluru, Karnataka", type: "management", category: "management", score: 87.82, established: 1973 },
@@ -1140,7 +1140,7 @@ const nirfColleges = [
     { rank: 13, name: "Indian Institute of Management Ranchi", location: "Ranchi, Jharkhand", type: "management", category: "management", score: 67.89, established: 2010 },
     { rank: 14, name: "National Institute of Industrial Engineering", location: "Mumbai, Maharashtra", type: "management", category: "management", score: 66.45, established: 1963 },
     { rank: 15, name: "Indian Institute of Management Kashipur", location: "Kashipur, Uttarakhand", type: "management", category: "management", score: 65.67, established: 2011 },
-    
+
     // Medical Colleges
     { rank: 1, name: "All India Institute of Medical Sciences", location: "New Delhi", type: "medical", category: "medical", score: 91.23, established: 1956 },
     { rank: 2, name: "Post Graduate Institute of Medical Education", location: "Chandigarh", type: "medical", category: "medical", score: 85.67, established: 1962 },
@@ -1157,7 +1157,7 @@ const nirfColleges = [
     { rank: 13, name: "Maulana Azad Medical College", location: "New Delhi", type: "medical", category: "medical", score: 67.45, established: 1958 },
     { rank: 14, name: "Seth GS Medical College", location: "Mumbai, Maharashtra", type: "medical", category: "medical", score: 66.89, established: 1926 },
     { rank: 15, name: "Grant Medical College", location: "Mumbai, Maharashtra", type: "medical", category: "medical", score: 65.34, established: 1845 },
-    
+
     // Universities
     { rank: 1, name: "Indian Institute of Science", location: "Bengaluru, Karnataka", type: "university", category: "university", score: 88.47, established: 1909 },
     { rank: 2, name: "Jawaharlal Nehru University", location: "New Delhi", type: "university", category: "university", score: 82.56, established: 1969 },
@@ -1187,26 +1187,26 @@ let collegeSearchTerm = '';
 function renderColleges() {
     const grid = document.getElementById('collegesGrid');
     if (!grid) return;
-    
+
     let filteredColleges = nirfColleges;
-    
+
     // Apply category filter
     if (collegeFilter !== 'all') {
-        filteredColleges = filteredColleges.filter(c => 
+        filteredColleges = filteredColleges.filter(c =>
             c.category === collegeFilter || c.type === collegeFilter
         );
     }
-    
+
     // Apply search filter
     if (collegeSearchTerm) {
         const search = collegeSearchTerm.toLowerCase();
-        filteredColleges = filteredColleges.filter(c => 
-            c.name.toLowerCase().includes(search) || 
+        filteredColleges = filteredColleges.filter(c =>
+            c.name.toLowerCase().includes(search) ||
             c.location.toLowerCase().includes(search) ||
             c.type.toLowerCase().includes(search)
         );
     }
-    
+
     if (filteredColleges.length === 0) {
         grid.innerHTML = `
             <div class="college-empty">
@@ -1220,7 +1220,7 @@ function renderColleges() {
         `;
         return;
     }
-    
+
     grid.innerHTML = filteredColleges.map(college => createCollegeCard(college)).join('');
 }
 
@@ -1232,12 +1232,20 @@ function createCollegeCard(college) {
         medical: '🏥',
         university: '🎓'
     };
-    
+
+    // Check if this is the user's college
+    const userCollege = currentUser?.collegeName?.toLowerCase() || '';
+    const isUserCollege = userCollege && (
+        userCollege.includes(college.name.toLowerCase()) ||
+        college.name.toLowerCase().includes(userCollege)
+    );
+    const yourCollegeBadge = isUserCollege ? '<span class="your-college-badge">✓ Your College</span>' : '';
+
     return `
-        <div class="college-card">
+        <div class="college-card" onclick="openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${college.location}', ${college.score}, ${college.established}, ${college.rank})">
             <div class="college-rank ${rankClass}">#${college.rank}</div>
             <div class="college-icon">${typeIcons[college.type] || '🏫'}</div>
-            <h3 class="college-name">${college.name}</h3>
+            <h3 class="college-name">${college.name}${yourCollegeBadge}</h3>
             <div class="college-location">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -1256,18 +1264,24 @@ function createCollegeCard(college) {
                     <span class="college-stat-label">Established</span>
                 </div>
             </div>
+            <button class="view-reviews-btn" onclick="event.stopPropagation(); openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${college.location}', ${college.score}, ${college.established}, ${college.rank})">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                View Reviews
+            </button>
         </div>
     `;
 }
 
 function filterColleges(filter) {
     collegeFilter = filter;
-    
+
     // Update active button
     document.querySelectorAll('[data-college-filter]').forEach(btn => {
         btn.classList.toggle('active', btn.dataset.collegeFilter === filter);
     });
-    
+
     renderColleges();
 }
 
@@ -1283,7 +1297,325 @@ document.addEventListener('DOMContentLoaded', () => {
     if (collegesTab && collegesTab.classList.contains('active')) {
         renderColleges();
     }
+
+    // Initialize star rating interactions
+    initStarRatings();
 });
 
 // Render colleges when tab is clicked
 const originalInitTabNavigation = typeof initTabNavigation !== 'undefined' ? initTabNavigation : null;
+
+// ===== College Review System =====
+let currentViewingCollege = null;
+let reviewRatings = {
+    overall: 0,
+    academics: 0,
+    faculty: 0,
+    infrastructure: 0,
+    placements: 0,
+    campusLife: 0
+};
+
+function initStarRatings() {
+    // Overall rating
+    const overallRating = document.getElementById('overallRating');
+    if (overallRating) {
+        overallRating.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', () => {
+                const value = parseInt(star.dataset.value);
+                reviewRatings.overall = value;
+                updateStarDisplay(overallRating, value);
+            });
+            star.addEventListener('mouseenter', () => {
+                highlightStars(overallRating, parseInt(star.dataset.value));
+            });
+            star.addEventListener('mouseleave', () => {
+                updateStarDisplay(overallRating, reviewRatings.overall);
+            });
+        });
+    }
+
+    // Specific ratings
+    document.querySelectorAll('.specific-ratings .star-rating').forEach(ratingDiv => {
+        const category = ratingDiv.dataset.category;
+        ratingDiv.querySelectorAll('.star').forEach(star => {
+            star.addEventListener('click', () => {
+                const value = parseInt(star.dataset.value);
+                reviewRatings[category] = value;
+                updateStarDisplay(ratingDiv, value);
+            });
+            star.addEventListener('mouseenter', () => {
+                highlightStars(ratingDiv, parseInt(star.dataset.value));
+            });
+            star.addEventListener('mouseleave', () => {
+                updateStarDisplay(ratingDiv, reviewRatings[category]);
+            });
+        });
+    });
+}
+
+function updateStarDisplay(container, value) {
+    container.querySelectorAll('.star').forEach(star => {
+        star.classList.toggle('active', parseInt(star.dataset.value) <= value);
+    });
+}
+
+function highlightStars(container, value) {
+    container.querySelectorAll('.star').forEach(star => {
+        star.classList.toggle('active', parseInt(star.dataset.value) <= value);
+    });
+}
+
+function resetReviewForm() {
+    reviewRatings = { overall: 0, academics: 0, faculty: 0, infrastructure: 0, placements: 0, campusLife: 0 };
+    document.querySelectorAll('.star-rating .star').forEach(star => star.classList.remove('active'));
+    const titleInput = document.getElementById('reviewTitle');
+    const contentInput = document.getElementById('reviewContent');
+    if (titleInput) titleInput.value = '';
+    if (contentInput) contentInput.value = '';
+}
+
+async function openCollegeDetails(encodedName, type, location, score, established, rank) {
+    const name = decodeURIComponent(encodedName);
+    currentViewingCollege = { name, type, location, score, established, rank };
+
+    const typeIcons = { engineering: '🏛️', management: '📊', medical: '🏥', university: '🎓' };
+
+    // Update modal header
+    document.getElementById('collegeDetailsName').textContent = name;
+
+    // Check if this is user's college
+    const userCollege = currentUser?.collegeName?.toLowerCase() || '';
+    const isUserCollege = userCollege && (
+        userCollege.includes(name.toLowerCase()) ||
+        name.toLowerCase().includes(userCollege)
+    );
+
+    // Update college info
+    document.getElementById('collegeDetailsHeader').innerHTML = `
+        <div class="college-details-icon">${typeIcons[type] || '🏫'}</div>
+        <div class="college-details-info">
+            <h3>${name}</h3>
+            <p>📍 ${location}</p>
+            <p>📅 Established: ${established}</p>
+            <div class="college-details-stats">
+                <div class="college-details-stat">
+                    <div class="college-details-stat-value">#${rank}</div>
+                    <div class="college-details-stat-label">NIRF Rank</div>
+                </div>
+                <div class="college-details-stat">
+                    <div class="college-details-stat-value">${score}</div>
+                    <div class="college-details-stat-label">Score</div>
+                </div>
+            </div>
+        </div>
+    `;
+
+    // Show/hide write review button based on user's college
+    const writeReviewBtn = document.getElementById('writeReviewBtn');
+    if (writeReviewBtn) {
+        if (isUserCollege) {
+            writeReviewBtn.style.display = 'inline-flex';
+            writeReviewBtn.textContent = 'Write Review';
+        } else {
+            writeReviewBtn.style.display = 'none';
+        }
+    }
+
+    // Show modal
+    document.getElementById('collegeDetailsOverlay').style.display = 'flex';
+
+    // Load reviews
+    await loadCollegeReviews(name);
+}
+
+function closeCollegeDetails() {
+    document.getElementById('collegeDetailsOverlay').style.display = 'none';
+    currentViewingCollege = null;
+}
+
+async function loadCollegeReviews(collegeName) {
+    const reviewsSummary = document.getElementById('reviewsSummary');
+    const reviewsList = document.getElementById('reviewsList');
+
+    reviewsSummary.innerHTML = '<div class="loading-spinner small"><div class="spinner"></div></div>';
+    reviewsList.innerHTML = '';
+
+    const data = await apiCall(`/api/reviews/${encodeURIComponent(collegeName)}`);
+
+    if (data && data.success) {
+        const { reviews, averageRatings } = data.data;
+
+        if (averageRatings) {
+            reviewsSummary.innerHTML = `
+                <div class="reviews-summary-rating">
+                    <div class="big-rating">${averageRatings.averageRating.toFixed(1)}</div>
+                    <div class="rating-stars">${'★'.repeat(Math.round(averageRatings.averageRating))}${'☆'.repeat(5 - Math.round(averageRatings.averageRating))}</div>
+                    <div class="total-reviews">${averageRatings.totalReviews} review${averageRatings.totalReviews !== 1 ? 's' : ''}</div>
+                </div>
+                <div class="reviews-summary-breakdown">
+                    ${createRatingBar('Academics', averageRatings.averageAcademics)}
+                    ${createRatingBar('Faculty', averageRatings.averageFaculty)}
+                    ${createRatingBar('Infrastructure', averageRatings.averageInfrastructure)}
+                    ${createRatingBar('Placements', averageRatings.averagePlacements)}
+                    ${createRatingBar('Campus Life', averageRatings.averageCampusLife)}
+                </div>
+            `;
+        } else {
+            reviewsSummary.innerHTML = `
+                <div class="reviews-summary-rating">
+                    <div class="big-rating">--</div>
+                    <div class="rating-stars">☆☆☆☆☆</div>
+                    <div class="total-reviews">No reviews yet</div>
+                </div>
+            `;
+        }
+
+        if (reviews.length > 0) {
+            reviewsList.innerHTML = reviews.map(review => createReviewItem(review)).join('');
+        } else {
+            reviewsList.innerHTML = `
+                <div class="reviews-empty">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                    </svg>
+                    <h4>No reviews yet</h4>
+                    <p>Be the first to share your experience!</p>
+                </div>
+            `;
+        }
+    } else {
+        reviewsSummary.innerHTML = '<p class="text-muted">Unable to load reviews</p>';
+    }
+}
+
+function createRatingBar(label, value) {
+    const percentage = value ? (value / 5) * 100 : 0;
+    const displayValue = value ? value.toFixed(1) : '--';
+    return `
+        <div class="rating-bar-row">
+            <span class="label">${label}</span>
+            <div class="rating-bar">
+                <div class="rating-bar-fill" style="width: ${percentage}%"></div>
+            </div>
+            <span class="value">${displayValue}</span>
+        </div>
+    `;
+}
+
+function createReviewItem(review) {
+    const author = review.author;
+    const initials = author ? `${author.firstName?.charAt(0) || ''}${author.lastName?.charAt(0) || ''}` : 'A';
+    const authorName = author ? `${author.firstName} ${author.lastName}` : 'Anonymous';
+    const date = new Date(review.createdAt).toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: 'numeric' });
+    const hasVoted = review.helpfulVotes?.includes(currentUser?._id);
+
+    return `
+        <div class="review-item">
+            <div class="review-item-header">
+                <div class="review-author-avatar">${initials}</div>
+                <div class="review-author-info">
+                    <div class="review-author-name">${authorName}</div>
+                    <div class="review-date">${date}</div>
+                </div>
+                <div class="review-rating">${'★'.repeat(review.rating)}${'☆'.repeat(5 - review.rating)}</div>
+            </div>
+            <h4 class="review-title">${review.title}</h4>
+            <p class="review-content">${review.content}</p>
+            <div class="review-actions">
+                <button class="review-helpful-btn ${hasVoted ? 'voted' : ''}" onclick="toggleHelpful('${review._id}')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3" />
+                    </svg>
+                    Helpful (${review.helpfulVotes?.length || 0})
+                </button>
+            </div>
+        </div>
+    `;
+}
+
+function openReviewModal() {
+    if (!currentViewingCollege) return;
+
+    // Check if user can review this college
+    const userCollege = currentUser?.collegeName?.toLowerCase() || '';
+    const collegeName = currentViewingCollege.name.toLowerCase();
+    const canReview = userCollege && (userCollege.includes(collegeName) || collegeName.includes(userCollege));
+
+    if (!canReview) {
+        showToast('You can only review your own college', 'error');
+        return;
+    }
+
+    resetReviewForm();
+    document.getElementById('reviewCollegeName').textContent = currentViewingCollege.name;
+    document.getElementById('reviewModalOverlay').style.display = 'flex';
+
+    // Re-initialize star ratings
+    setTimeout(initStarRatings, 100);
+}
+
+function closeReviewModal() {
+    document.getElementById('reviewModalOverlay').style.display = 'none';
+    resetReviewForm();
+}
+
+async function submitReview() {
+    if (!currentViewingCollege) return;
+
+    const title = document.getElementById('reviewTitle').value.trim();
+    const content = document.getElementById('reviewContent').value.trim();
+
+    if (reviewRatings.overall === 0) {
+        showToast('Please provide an overall rating', 'error');
+        return;
+    }
+
+    if (!title) {
+        showToast('Please provide a review title', 'error');
+        return;
+    }
+
+    if (!content || content.length < 50) {
+        showToast('Please write at least 50 characters in your review', 'error');
+        return;
+    }
+
+    const btn = document.getElementById('submitReviewBtn');
+    btn.disabled = true;
+    btn.textContent = 'Submitting...';
+
+    const data = await apiCall('/api/reviews', 'POST', {
+        collegeName: currentViewingCollege.name,
+        rating: reviewRatings.overall,
+        title,
+        content,
+        academics: reviewRatings.academics || null,
+        faculty: reviewRatings.faculty || null,
+        infrastructure: reviewRatings.infrastructure || null,
+        placements: reviewRatings.placements || null,
+        campusLife: reviewRatings.campusLife || null
+    });
+
+    btn.disabled = false;
+    btn.textContent = 'Submit Review';
+
+    if (data && data.success) {
+        closeReviewModal();
+        showToast('Review submitted successfully!', 'success');
+        await loadCollegeReviews(currentViewingCollege.name);
+    } else {
+        showToast(data?.message || 'Failed to submit review', 'error');
+    }
+}
+
+async function toggleHelpful(reviewId) {
+    const data = await apiCall(`/api/reviews/${reviewId}/helpful`, 'POST');
+
+    if (data && data.success) {
+        // Reload reviews to update the helpful count
+        if (currentViewingCollege) {
+            await loadCollegeReviews(currentViewingCollege.name);
+        }
+    }
+}

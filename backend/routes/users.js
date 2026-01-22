@@ -265,4 +265,51 @@ router.get('/suggestions/smart', protect, async (req, res) => {
     }
 });
 
+// @route   GET /api/users/college/:collegeName
+// @desc    Get users from a specific college
+// @access  Private
+router.get('/college/:collegeName', protect, async (req, res) => {
+    try {
+        const collegeName = decodeURIComponent(req.params.collegeName);
+        const { page = 1, limit = 10 } = req.query;
+
+        // Create flexible search query for college name
+        const collegeWords = collegeName.split(/\s+/).filter(w => w.length > 2);
+        const regexPattern = collegeWords.map(word => `(?=.*${word})`).join('');
+        
+        const query = {
+            isVerified: true,
+            collegeName: new RegExp(regexPattern, 'i')
+        };
+
+        const users = await User.find(query)
+            .select('firstName lastName collegeName course year bio skills profilePicture isOnline')
+            .sort({ isOnline: -1, createdAt: -1 })
+            .skip((page - 1) * limit)
+            .limit(parseInt(limit));
+
+        const total = await User.countDocuments(query);
+
+        res.json({
+            success: true,
+            data: {
+                users,
+                total,
+                pagination: {
+                    page: parseInt(page),
+                    limit: parseInt(limit),
+                    pages: Math.ceil(total / limit)
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error('Get college users error:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to fetch college users'
+        });
+    }
+});
+
 module.exports = router;

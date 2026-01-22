@@ -13,6 +13,7 @@ const authRoutes = require('./routes/auth');
 const userRoutes = require('./routes/users');
 const connectionRoutes = require('./routes/connections');
 const postRoutes = require('./routes/posts');
+const reviewRoutes = require('./routes/reviews');
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/connections', connectionRoutes);
 app.use('/api/posts', postRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Health check endpoint (for Render)
 app.get('/health', (req, res) => {
