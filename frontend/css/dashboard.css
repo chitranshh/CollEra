@@ -1370,13 +1370,25 @@
 }
 
 @keyframes fadeIn {
-    from { opacity: 0; }
-    to { opacity: 1; }
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
 }
 
 @keyframes slideUp {
-    from { transform: translateY(20px); opacity: 0; }
-    to { transform: translateY(0); opacity: 1; }
+    from {
+        transform: translateY(20px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
 }
 
 /* My Account Styles */
@@ -1569,4 +1581,186 @@
 
 .delete-account-actions .btn {
     min-width: 140px;
+}
+
+/* ===== Colleges Tab Styles ===== */
+.colleges-filters {
+    margin-bottom: 24px;
+}
+
+.colleges-filters .filter-group {
+    margin-bottom: 16px;
+}
+
+.colleges-filters .filter-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.colleges-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 20px;
+}
+
+.college-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    transition: all var(--transition-normal);
+    position: relative;
+    overflow: hidden;
+}
+
+.college-card:hover {
+    border-color: var(--accent-primary);
+    transform: translateY(-4px);
+    box-shadow: 0 12px 40px rgba(99, 102, 241, 0.15);
+}
+
+.college-rank {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: var(--gradient-primary);
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 6px 12px;
+    border-radius: 20px;
+}
+
+.college-rank.top-10 {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+}
+
+.college-rank.top-25 {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.college-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--bg-dark);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    margin-bottom: 16px;
+}
+
+.college-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 6px;
+    line-height: 1.4;
+    padding-right: 60px;
+}
+
+.college-location {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--text-muted);
+    font-size: 13px;
+    margin-bottom: 12px;
+}
+
+.college-location svg {
+    width: 14px;
+    height: 14px;
+}
+
+.college-type {
+    display: inline-block;
+    background: rgba(99, 102, 241, 0.15);
+    color: var(--accent-primary);
+    font-size: 12px;
+    font-weight: 500;
+    padding: 4px 10px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+}
+
+.college-type.engineering {
+    background: rgba(59, 130, 246, 0.15);
+    color: #3b82f6;
+}
+
+.college-type.management {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+}
+
+.college-type.medical {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+}
+
+.college-type.university {
+    background: rgba(168, 85, 247, 0.15);
+    color: #a855f7;
+}
+
+.college-stats {
+    display: flex;
+    gap: 16px;
+    padding-top: 12px;
+    border-top: 1px solid var(--border-color);
+    margin-top: 12px;
+}
+
+.college-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.college-stat-value {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.college-stat-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.college-empty {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.college-empty svg {
+    width: 64px;
+    height: 64px;
+    stroke: var(--text-muted);
+    margin-bottom: 16px;
+}
+
+.college-empty h3 {
+    font-size: 1.25rem;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+}
+
+@media (max-width: 768px) {
+    .colleges-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .colleges-filters .filter-tags {
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        padding-bottom: 8px;
+    }
 }

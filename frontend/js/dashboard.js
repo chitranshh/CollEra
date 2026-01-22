@@ -434,6 +434,11 @@ function initTabNavigation() {
                 tab.classList.remove('active');
             });
             document.getElementById(`${tabId}Tab`).classList.add('active');
+            
+            // Load colleges when switching to colleges tab
+            if (tabId === 'colleges') {
+                renderColleges();
+            }
         });
     });
 }
@@ -652,7 +657,7 @@ function showMyAccount() {
     // Close the dropdown
     document.getElementById('userDropdown').classList.remove('active');
     document.querySelector('.user-menu').classList.remove('active');
-    
+
     // Show My Account modal
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     showModal('My Account', `
@@ -673,7 +678,7 @@ function showEditProfile() {
     // Close the dropdown
     document.getElementById('userDropdown').classList.remove('active');
     document.querySelector('.user-menu').classList.remove('active');
-    
+
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     showModal('Edit Profile', `
         <form id="editProfileForm" class="edit-profile-form">
@@ -700,7 +705,7 @@ function showEditProfile() {
             <button type="submit" class="btn btn-primary btn-full">Save Changes</button>
         </form>
     `);
-    
+
     // Add form submit handler
     setTimeout(() => {
         const form = document.getElementById('editProfileForm');
@@ -712,28 +717,28 @@ function showEditProfile() {
 
 async function handleEditProfile(e) {
     e.preventDefault();
-    
+
     const name = document.getElementById('editName').value;
     const bio = document.getElementById('editBio').value;
     const skills = document.getElementById('editSkills').value.split(',').map(s => s.trim()).filter(s => s);
     const linkedin = document.getElementById('editLinkedin').value;
     const github = document.getElementById('editGithub').value;
-    
+
     const data = await apiCall('/api/users/profile', 'PUT', {
         name, bio, skills, linkedin, github
     });
-    
+
     if (data && data.success) {
         // Update local storage
         const user = JSON.parse(localStorage.getItem('user') || '{}');
         Object.assign(user, { name, bio, skills, linkedin, github });
         localStorage.setItem('user', JSON.stringify(user));
-        
+
         // Update UI
         document.getElementById('userName').textContent = name;
         document.getElementById('userAvatar').textContent = name.charAt(0).toUpperCase();
         document.getElementById('postUserAvatar').textContent = name.charAt(0).toUpperCase();
-        
+
         closeModal();
         showToast('Profile updated successfully!', 'success');
     } else {
@@ -745,7 +750,7 @@ function showHelpCenter() {
     // Close the dropdown
     document.getElementById('userDropdown').classList.remove('active');
     document.querySelector('.user-menu').classList.remove('active');
-    
+
     showModal('Help Center', `
         <div class="help-center">
             <div class="help-section">
@@ -779,7 +784,7 @@ function showDeleteAccount() {
     // Close the dropdown
     document.getElementById('userDropdown').classList.remove('active');
     document.querySelector('.user-menu').classList.remove('active');
-    
+
     showModal('Delete Account', `
         <div class="delete-account-warning">
             <div class="warning-icon">⚠️</div>
@@ -795,7 +800,7 @@ function showDeleteAccount() {
 
 async function confirmDeleteAccount() {
     const data = await apiCall('/api/users/account', 'DELETE');
-    
+
     if (data && data.success) {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
@@ -812,7 +817,7 @@ async function confirmDeleteAccount() {
 function showModal(title, content) {
     // Remove existing modal if any
     closeModal();
-    
+
     const modal = document.createElement('div');
     modal.className = 'modal-overlay';
     modal.id = 'genericModal';
@@ -827,9 +832,9 @@ function showModal(title, content) {
             </div>
         </div>
     `;
-    
+
     document.body.appendChild(modal);
-    
+
     // Close on overlay click
     modal.addEventListener('click', (e) => {
         if (e.target === modal) closeModal();
@@ -1083,3 +1088,202 @@ async function loadMorePosts() {
         }
     }
 }
+// ===== Colleges Tab - NIRF Rankings Data =====
+const nirfColleges = [
+    // Top Overall Rankings
+    { rank: 1, name: "Indian Institute of Technology Madras", location: "Chennai, Tamil Nadu", type: "engineering", category: "overall", score: 90.04, established: 1959 },
+    { rank: 2, name: "Indian Institute of Technology Delhi", location: "New Delhi", type: "engineering", category: "overall", score: 88.17, established: 1961 },
+    { rank: 3, name: "Indian Institute of Technology Bombay", location: "Mumbai, Maharashtra", type: "engineering", category: "overall", score: 85.35, established: 1958 },
+    { rank: 4, name: "Indian Institute of Science", location: "Bengaluru, Karnataka", type: "university", category: "overall", score: 83.57, established: 1909 },
+    { rank: 5, name: "Indian Institute of Technology Kanpur", location: "Kanpur, Uttar Pradesh", type: "engineering", category: "overall", score: 82.56, established: 1959 },
+    { rank: 6, name: "Indian Institute of Technology Kharagpur", location: "Kharagpur, West Bengal", type: "engineering", category: "overall", score: 78.89, established: 1951 },
+    { rank: 7, name: "Indian Institute of Technology Roorkee", location: "Roorkee, Uttarakhand", type: "engineering", category: "overall", score: 76.70, established: 1847 },
+    { rank: 8, name: "Indian Institute of Technology Guwahati", location: "Guwahati, Assam", type: "engineering", category: "overall", score: 71.77, established: 1994 },
+    { rank: 9, name: "All India Institute of Medical Sciences", location: "New Delhi", type: "medical", category: "overall", score: 70.89, established: 1956 },
+    { rank: 10, name: "Jawaharlal Nehru University", location: "New Delhi", type: "university", category: "overall", score: 69.47, established: 1969 },
+    
+    // Engineering Colleges
+    { rank: 11, name: "National Institute of Technology Tiruchirappalli", location: "Tiruchirappalli, Tamil Nadu", type: "engineering", category: "engineering", score: 68.54, established: 1964 },
+    { rank: 12, name: "Indian Institute of Technology Hyderabad", location: "Hyderabad, Telangana", type: "engineering", category: "engineering", score: 67.89, established: 2008 },
+    { rank: 13, name: "National Institute of Technology Karnataka", location: "Surathkal, Karnataka", type: "engineering", category: "engineering", score: 66.23, established: 1960 },
+    { rank: 14, name: "Indian Institute of Technology Indore", location: "Indore, Madhya Pradesh", type: "engineering", category: "engineering", score: 65.78, established: 2009 },
+    { rank: 15, name: "Indian Institute of Technology BHU", location: "Varanasi, Uttar Pradesh", type: "engineering", category: "engineering", score: 65.12, established: 1919 },
+    { rank: 16, name: "Vellore Institute of Technology", location: "Vellore, Tamil Nadu", type: "engineering", category: "engineering", score: 64.56, established: 1984 },
+    { rank: 17, name: "National Institute of Technology Warangal", location: "Warangal, Telangana", type: "engineering", category: "engineering", score: 63.89, established: 1959 },
+    { rank: 18, name: "Indian Institute of Technology Patna", location: "Patna, Bihar", type: "engineering", category: "engineering", score: 63.45, established: 2008 },
+    { rank: 19, name: "Indian Institute of Technology Bhubaneswar", location: "Bhubaneswar, Odisha", type: "engineering", category: "engineering", score: 62.78, established: 2008 },
+    { rank: 20, name: "Jadavpur University", location: "Kolkata, West Bengal", type: "engineering", category: "engineering", score: 62.34, established: 1955 },
+    { rank: 21, name: "BITS Pilani", location: "Pilani, Rajasthan", type: "engineering", category: "engineering", score: 61.89, established: 1964 },
+    { rank: 22, name: "National Institute of Technology Rourkela", location: "Rourkela, Odisha", type: "engineering", category: "engineering", score: 61.23, established: 1961 },
+    { rank: 23, name: "Delhi Technological University", location: "New Delhi", type: "engineering", category: "engineering", score: 60.78, established: 1941 },
+    { rank: 24, name: "Indian Institute of Technology Dhanbad", location: "Dhanbad, Jharkhand", type: "engineering", category: "engineering", score: 60.12, established: 1926 },
+    { rank: 25, name: "Amrita Vishwa Vidyapeetham", location: "Coimbatore, Tamil Nadu", type: "engineering", category: "engineering", score: 59.67, established: 1994 },
+    { rank: 26, name: "National Institute of Technology Calicut", location: "Kozhikode, Kerala", type: "engineering", category: "engineering", score: 59.23, established: 1961 },
+    { rank: 27, name: "Thapar Institute of Engineering", location: "Patiala, Punjab", type: "engineering", category: "engineering", score: 58.89, established: 1956 },
+    { rank: 28, name: "College of Engineering Pune", location: "Pune, Maharashtra", type: "engineering", category: "engineering", score: 58.45, established: 1854 },
+    { rank: 29, name: "SRM Institute of Science and Technology", location: "Chennai, Tamil Nadu", type: "engineering", category: "engineering", score: 57.89, established: 1985 },
+    { rank: 30, name: "PSG College of Technology", location: "Coimbatore, Tamil Nadu", type: "engineering", category: "engineering", score: 57.34, established: 1951 },
+    
+    // Management Colleges
+    { rank: 1, name: "Indian Institute of Management Ahmedabad", location: "Ahmedabad, Gujarat", type: "management", category: "management", score: 89.25, established: 1961 },
+    { rank: 2, name: "Indian Institute of Management Bangalore", location: "Bengaluru, Karnataka", type: "management", category: "management", score: 87.82, established: 1973 },
+    { rank: 3, name: "Indian Institute of Management Calcutta", location: "Kolkata, West Bengal", type: "management", category: "management", score: 85.45, established: 1961 },
+    { rank: 4, name: "Indian Institute of Management Kozhikode", location: "Kozhikode, Kerala", type: "management", category: "management", score: 79.23, established: 1996 },
+    { rank: 5, name: "Indian Institute of Management Lucknow", location: "Lucknow, Uttar Pradesh", type: "management", category: "management", score: 78.67, established: 1984 },
+    { rank: 6, name: "Indian Institute of Management Indore", location: "Indore, Madhya Pradesh", type: "management", category: "management", score: 76.89, established: 1996 },
+    { rank: 7, name: "XLRI - Xavier School of Management", location: "Jamshedpur, Jharkhand", type: "management", category: "management", score: 74.56, established: 1949 },
+    { rank: 8, name: "Indian Institute of Management Tiruchirappalli", location: "Tiruchirappalli, Tamil Nadu", type: "management", category: "management", score: 72.34, established: 2011 },
+    { rank: 9, name: "Management Development Institute", location: "Gurugram, Haryana", type: "management", category: "management", score: 71.89, established: 1973 },
+    { rank: 10, name: "Faculty of Management Studies, Delhi", location: "New Delhi", type: "management", category: "management", score: 70.45, established: 1954 },
+    { rank: 11, name: "Indian Institute of Management Raipur", location: "Raipur, Chhattisgarh", type: "management", category: "management", score: 69.23, established: 2010 },
+    { rank: 12, name: "SP Jain Institute of Management", location: "Mumbai, Maharashtra", type: "management", category: "management", score: 68.78, established: 1981 },
+    { rank: 13, name: "Indian Institute of Management Ranchi", location: "Ranchi, Jharkhand", type: "management", category: "management", score: 67.89, established: 2010 },
+    { rank: 14, name: "National Institute of Industrial Engineering", location: "Mumbai, Maharashtra", type: "management", category: "management", score: 66.45, established: 1963 },
+    { rank: 15, name: "Indian Institute of Management Kashipur", location: "Kashipur, Uttarakhand", type: "management", category: "management", score: 65.67, established: 2011 },
+    
+    // Medical Colleges
+    { rank: 1, name: "All India Institute of Medical Sciences", location: "New Delhi", type: "medical", category: "medical", score: 91.23, established: 1956 },
+    { rank: 2, name: "Post Graduate Institute of Medical Education", location: "Chandigarh", type: "medical", category: "medical", score: 85.67, established: 1962 },
+    { rank: 3, name: "Christian Medical College", location: "Vellore, Tamil Nadu", type: "medical", category: "medical", score: 82.34, established: 1900 },
+    { rank: 4, name: "National Institute of Mental Health", location: "Bengaluru, Karnataka", type: "medical", category: "medical", score: 78.89, established: 1954 },
+    { rank: 5, name: "Sanjay Gandhi Postgraduate Institute", location: "Lucknow, Uttar Pradesh", type: "medical", category: "medical", score: 76.45, established: 1983 },
+    { rank: 6, name: "AIIMS Jodhpur", location: "Jodhpur, Rajasthan", type: "medical", category: "medical", score: 74.23, established: 2012 },
+    { rank: 7, name: "Jawaharlal Institute of Postgraduate Medical Education", location: "Puducherry", type: "medical", category: "medical", score: 73.67, established: 1823 },
+    { rank: 8, name: "King George's Medical University", location: "Lucknow, Uttar Pradesh", type: "medical", category: "medical", score: 72.34, established: 1911 },
+    { rank: 9, name: "Kasturba Medical College", location: "Manipal, Karnataka", type: "medical", category: "medical", score: 71.89, established: 1953 },
+    { rank: 10, name: "Armed Forces Medical College", location: "Pune, Maharashtra", type: "medical", category: "medical", score: 70.45, established: 1948 },
+    { rank: 11, name: "AIIMS Bhubaneswar", location: "Bhubaneswar, Odisha", type: "medical", category: "medical", score: 69.23, established: 2012 },
+    { rank: 12, name: "AIIMS Rishikesh", location: "Rishikesh, Uttarakhand", type: "medical", category: "medical", score: 68.78, established: 2012 },
+    { rank: 13, name: "Maulana Azad Medical College", location: "New Delhi", type: "medical", category: "medical", score: 67.45, established: 1958 },
+    { rank: 14, name: "Seth GS Medical College", location: "Mumbai, Maharashtra", type: "medical", category: "medical", score: 66.89, established: 1926 },
+    { rank: 15, name: "Grant Medical College", location: "Mumbai, Maharashtra", type: "medical", category: "medical", score: 65.34, established: 1845 },
+    
+    // Universities
+    { rank: 1, name: "Indian Institute of Science", location: "Bengaluru, Karnataka", type: "university", category: "university", score: 88.47, established: 1909 },
+    { rank: 2, name: "Jawaharlal Nehru University", location: "New Delhi", type: "university", category: "university", score: 82.56, established: 1969 },
+    { rank: 3, name: "Banaras Hindu University", location: "Varanasi, Uttar Pradesh", type: "university", category: "university", score: 78.34, established: 1916 },
+    { rank: 4, name: "University of Delhi", location: "New Delhi", type: "university", category: "university", score: 75.89, established: 1922 },
+    { rank: 5, name: "Jadavpur University", location: "Kolkata, West Bengal", type: "university", category: "university", score: 73.45, established: 1955 },
+    { rank: 6, name: "Anna University", location: "Chennai, Tamil Nadu", type: "university", category: "university", score: 71.23, established: 1978 },
+    { rank: 7, name: "University of Hyderabad", location: "Hyderabad, Telangana", type: "university", category: "university", score: 69.78, established: 1974 },
+    { rank: 8, name: "Calcutta University", location: "Kolkata, West Bengal", type: "university", category: "university", score: 68.45, established: 1857 },
+    { rank: 9, name: "Manipal Academy of Higher Education", location: "Manipal, Karnataka", type: "university", category: "university", score: 67.23, established: 1953 },
+    { rank: 10, name: "Amrita Vishwa Vidyapeetham", location: "Coimbatore, Tamil Nadu", type: "university", category: "university", score: 66.78, established: 2003 },
+    { rank: 11, name: "Savitribai Phule Pune University", location: "Pune, Maharashtra", type: "university", category: "university", score: 65.45, established: 1949 },
+    { rank: 12, name: "Aligarh Muslim University", location: "Aligarh, Uttar Pradesh", type: "university", category: "university", score: 64.89, established: 1920 },
+    { rank: 13, name: "Jamia Millia Islamia", location: "New Delhi", type: "university", category: "university", score: 64.23, established: 1920 },
+    { rank: 14, name: "University of Mumbai", location: "Mumbai, Maharashtra", type: "university", category: "university", score: 63.56, established: 1857 },
+    { rank: 15, name: "Bharathiar University", location: "Coimbatore, Tamil Nadu", type: "university", category: "university", score: 62.78, established: 1982 },
+    { rank: 16, name: "Osmania University", location: "Hyderabad, Telangana", type: "university", category: "university", score: 61.45, established: 1918 },
+    { rank: 17, name: "Panjab University", location: "Chandigarh", type: "university", category: "university", score: 60.89, established: 1882 },
+    { rank: 18, name: "Visva-Bharati University", location: "Santiniketan, West Bengal", type: "university", category: "university", score: 59.67, established: 1921 },
+    { rank: 19, name: "Madras University", location: "Chennai, Tamil Nadu", type: "university", category: "university", score: 58.45, established: 1857 },
+    { rank: 20, name: "KIIT University", location: "Bhubaneswar, Odisha", type: "university", category: "university", score: 57.23, established: 1997 }
+];
+
+let collegeFilter = 'all';
+let collegeSearchTerm = '';
+
+function renderColleges() {
+    const grid = document.getElementById('collegesGrid');
+    if (!grid) return;
+    
+    let filteredColleges = nirfColleges;
+    
+    // Apply category filter
+    if (collegeFilter !== 'all') {
+        filteredColleges = filteredColleges.filter(c => 
+            c.category === collegeFilter || c.type === collegeFilter
+        );
+    }
+    
+    // Apply search filter
+    if (collegeSearchTerm) {
+        const search = collegeSearchTerm.toLowerCase();
+        filteredColleges = filteredColleges.filter(c => 
+            c.name.toLowerCase().includes(search) || 
+            c.location.toLowerCase().includes(search) ||
+            c.type.toLowerCase().includes(search)
+        );
+    }
+    
+    if (filteredColleges.length === 0) {
+        grid.innerHTML = `
+            <div class="college-empty">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                    <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                </svg>
+                <h3>No colleges found</h3>
+                <p>Try adjusting your search or filter criteria</p>
+            </div>
+        `;
+        return;
+    }
+    
+    grid.innerHTML = filteredColleges.map(college => createCollegeCard(college)).join('');
+}
+
+function createCollegeCard(college) {
+    const rankClass = college.rank <= 10 ? 'top-10' : college.rank <= 25 ? 'top-25' : '';
+    const typeIcons = {
+        engineering: '🏛️',
+        management: '📊',
+        medical: '🏥',
+        university: '🎓'
+    };
+    
+    return `
+        <div class="college-card">
+            <div class="college-rank ${rankClass}">#${college.rank}</div>
+            <div class="college-icon">${typeIcons[college.type] || '🏫'}</div>
+            <h3 class="college-name">${college.name}</h3>
+            <div class="college-location">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                    <circle cx="12" cy="10" r="3" />
+                </svg>
+                ${college.location}
+            </div>
+            <span class="college-type ${college.type}">${college.type.charAt(0).toUpperCase() + college.type.slice(1)}</span>
+            <div class="college-stats">
+                <div class="college-stat">
+                    <span class="college-stat-value">${college.score}</span>
+                    <span class="college-stat-label">NIRF Score</span>
+                </div>
+                <div class="college-stat">
+                    <span class="college-stat-value">${college.established}</span>
+                    <span class="college-stat-label">Established</span>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function filterColleges(filter) {
+    collegeFilter = filter;
+    
+    // Update active button
+    document.querySelectorAll('[data-college-filter]').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.collegeFilter === filter);
+    });
+    
+    renderColleges();
+}
+
+function handleCollegeSearch(event) {
+    collegeSearchTerm = event.target.value;
+    renderColleges();
+}
+
+// Initialize colleges when switching to the tab
+document.addEventListener('DOMContentLoaded', () => {
+    // Initial render if on colleges tab
+    const collegesTab = document.getElementById('collegesTab');
+    if (collegesTab && collegesTab.classList.contains('active')) {
+        renderColleges();
+    }
+});
+
+// Render colleges when tab is clicked
+const originalInitTabNavigation = typeof initTabNavigation !== 'undefined' ? initTabNavigation : null;

@@ -126,6 +126,14 @@
                         </svg>
                         <span>Explore</span>
                     </a>
+                    <a href="#" class="sidebar-link" data-tab="colleges">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                            stroke-width="2">
+                            <path d="M22 10v6M2 10l10-5 10 5-10 5z" />
+                            <path d="M6 12v5c3 3 9 3 12 0v-5" />
+                        </svg>
+                        <span>Colleges</span>
+                    </a>
                     <a href="#" class="sidebar-link" data-tab="requests">
                         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor"
                             stroke-width="2">
@@ -284,6 +292,40 @@
                             <h3>No notifications yet</h3>
                             <p>When someone likes your post or sends a request, you'll see it here</p>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Colleges Tab -->
+                <div class="tab-content" id="collegesTab">
+                    <div class="content-header">
+                        <h1>Top Colleges in India</h1>
+                        <p>NIRF Rankings 2025 - Explore the best institutions across India</p>
+                    </div>
+
+                    <div class="colleges-filters">
+                        <div class="filter-group">
+                            <input type="text" class="filter-input" id="collegeSearch"
+                                placeholder="Search colleges by name, location, or type..."
+                                onkeyup="handleCollegeSearch(event)">
+                        </div>
+                        <div class="filter-tags">
+                            <button class="filter-tag active" data-college-filter="all"
+                                onclick="filterColleges('all')">All</button>
+                            <button class="filter-tag" data-college-filter="overall"
+                                onclick="filterColleges('overall')">Overall</button>
+                            <button class="filter-tag" data-college-filter="engineering"
+                                onclick="filterColleges('engineering')">Engineering</button>
+                            <button class="filter-tag" data-college-filter="management"
+                                onclick="filterColleges('management')">Management</button>
+                            <button class="filter-tag" data-college-filter="medical"
+                                onclick="filterColleges('medical')">Medical</button>
+                            <button class="filter-tag" data-college-filter="university"
+                                onclick="filterColleges('university')">Universities</button>
+                        </div>
+                    </div>
+
+                    <div class="colleges-grid" id="collegesGrid">
+                        <!-- Colleges will be loaded here by JavaScript -->
                     </div>
                 </div>
             </section>
