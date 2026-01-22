@@ -1245,6 +1245,99 @@ body {
     background-position: right 12px center;
 }
 
+/* ===== College Autocomplete Styles ===== */
+.college-autocomplete-group {
+    position: relative;
+}
+
+.college-suggestions {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: rgba(20, 20, 30, 0.98);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 1000;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.2s ease;
+    margin-top: 4px;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(20px);
+}
+
+.college-suggestions.active {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.suggestion-item {
+    padding: 12px 16px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    transition: background 0.15s ease;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.suggestion-item:last-child {
+    border-bottom: none;
+}
+
+.suggestion-item:hover,
+.suggestion-item.selected {
+    background: rgba(102, 126, 234, 0.2);
+}
+
+.suggestion-item svg {
+    flex-shrink: 0;
+    opacity: 0.5;
+}
+
+.suggestion-item span {
+    font-size: 14px;
+    color: var(--text-secondary);
+}
+
+.suggestion-item span strong {
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.suggestion-item.no-match {
+    cursor: default;
+    color: var(--text-muted);
+    font-style: italic;
+}
+
+.suggestion-item.no-match:hover {
+    background: transparent;
+}
+
+/* Custom scrollbar for suggestions */
+.college-suggestions::-webkit-scrollbar {
+    width: 6px;
+}
+
+.college-suggestions::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.college-suggestions::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+}
+
+.college-suggestions::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
+}
+
 .input-hint {
     font-size: 12px;
     color: var(--text-muted);

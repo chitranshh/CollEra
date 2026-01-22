@@ -465,56 +465,53 @@ function updateNavForLoggedInUser(user) {
 }
 
 // ===== Public Colleges Section =====
-const publicColleges = {
-    engineering: [
-        { name: 'IIT Madras', rank: 1 },
-        { name: 'IIT Delhi', rank: 2 },
-        { name: 'IIT Bombay', rank: 3 },
-        { name: 'IIT Kanpur', rank: 4 },
-        { name: 'IIT Kharagpur', rank: 5 },
-        { name: 'IIT Roorkee', rank: 6 },
-        { name: 'IIT Guwahati', rank: 7 },
-        { name: 'IIT Hyderabad', rank: 8 },
-        { name: 'NIT Trichy', rank: 9 },
-        { name: 'NIT Surathkal', rank: 10 },
-        { name: 'NIT Warangal', rank: 11 },
-        { name: 'BITS Pilani', rank: 12 }
-    ],
-    management: [
-        { name: 'IIM Ahmedabad', rank: 1 },
-        { name: 'IIM Bangalore', rank: 2 },
-        { name: 'IIM Calcutta', rank: 3 },
-        { name: 'IIM Lucknow', rank: 4 },
-        { name: 'IIM Kozhikode', rank: 5 },
-        { name: 'IIM Indore', rank: 6 },
-        { name: 'XLRI Jamshedpur', rank: 7 },
-        { name: 'FMS Delhi', rank: 8 },
-        { name: 'MDI Gurgaon', rank: 9 },
-        { name: 'SP Jain Mumbai', rank: 10 }
-    ],
-    medical: [
-        { name: 'AIIMS Delhi', rank: 1 },
-        { name: 'PGIMER Chandigarh', rank: 2 },
-        { name: 'CMC Vellore', rank: 3 },
-        { name: 'NIMHANS Bangalore', rank: 4 },
-        { name: 'JIPMER Puducherry', rank: 5 },
-        { name: 'SGPGI Lucknow', rank: 6 },
-        { name: 'BHU Medical', rank: 7 },
-        { name: 'King George Medical', rank: 8 }
-    ],
-    universities: [
-        { name: 'IISc Bangalore', rank: 1 },
-        { name: 'JNU Delhi', rank: 2 },
-        { name: 'BHU Varanasi', rank: 3 },
-        { name: 'Delhi University', rank: 4 },
-        { name: 'Jamia Millia Islamia', rank: 5 },
-        { name: 'University of Hyderabad', rank: 6 },
-        { name: 'Amity University', rank: 7 },
-        { name: 'Jadavpur University', rank: 8 }
-    ]
-};
+// Uses collegeList from collegesData.js - comprehensive list of 1000+ colleges
 
-let currentPublicCategory = 'engineering';
+// Create categorized view for public display (first 12 per category)
+function getCategorizedColleges() {
+    // Filter and categorize colleges based on keywords
+    const allColleges = typeof sortedCollegeList !== 'undefined' ? sortedCollegeList : [];
+
+    const categories = {
+        engineering: [],
+        management: [],
+        medical: [],
+        universities: [],
+        all: []
+    };
+
+    allColleges.forEach((name, index) => {
+        const lowerName = name.toLowerCase();
+
+        // Categorize based on keywords
+        if (lowerName.includes('iim') || lowerName.includes('management') ||
+            lowerName.includes('business') || lowerName.includes('mba') ||
+            lowerName.includes('xlri') || lowerName.includes('fms')) {
+            categories.management.push({ name, rank: categories.management.length + 1 });
+        } else if (lowerName.includes('medical') || lowerName.includes('aiims') ||
+            lowerName.includes('health') || lowerName.includes('pharmacy') ||
+            lowerName.includes('nursing') || lowerName.includes('dental')) {
+            categories.medical.push({ name, rank: categories.medical.length + 1 });
+        } else if (lowerName.includes('university') || lowerName.includes('vishwavidyalaya') ||
+            lowerName.includes('vidyapith') || lowerName.includes('vidyapeeth')) {
+            categories.universities.push({ name, rank: categories.universities.length + 1 });
+        } else if (lowerName.includes('engineering') || lowerName.includes('technology') ||
+            lowerName.includes('technical') || lowerName.includes('iit') ||
+            lowerName.includes('nit') || lowerName.includes('iiit') ||
+            lowerName.includes('bits') || lowerName.includes('college')) {
+            categories.engineering.push({ name, rank: categories.engineering.length + 1 });
+        }
+
+        // Add all to 'all' category
+        categories.all.push({ name, rank: index + 1 });
+    });
+
+    return categories;
+}
+
+const publicColleges = getCategorizedColleges();
+
+let currentPublicCategory = 'all';
 let publicSearchQuery = '';
 
 function initPublicColleges() {
@@ -551,12 +548,20 @@ function renderPublicColleges() {
         colleges = colleges.filter(c => c.name.toLowerCase().includes(publicSearchQuery));
     }
 
-    // Show max 8 colleges for public view
-    const displayColleges = colleges.slice(0, 8);
+    // Show max 12 colleges for public view
+    const displayColleges = colleges.slice(0, 12);
+
+    if (displayColleges.length === 0) {
+        grid.innerHTML = `
+            <div class="public-no-colleges">
+                <p>No colleges found matching your search</p>
+            </div>
+        `;
+        return;
+    }
 
     grid.innerHTML = displayColleges.map(college => `
         <div class="public-college-card" onclick="openPublicCollegeReviews('${college.name}', ${college.rank}, '${currentPublicCategory}')">
-            <div class="public-college-rank-badge">#${college.rank}</div>
             <div class="public-college-info">
                 <h3>${college.name}</h3>
                 <div class="public-college-action">
@@ -739,11 +744,115 @@ function checkVerificationStatus() {
     }
 }
 
+// ===== College Name Autocomplete =====
+function initCollegeAutocomplete() {
+    const input = document.getElementById('collegeName');
+    const suggestionsDiv = document.getElementById('collegeSuggestions');
+
+    if (!input || !suggestionsDiv) return;
+
+    let selectedIndex = -1;
+    const colleges = typeof sortedCollegeList !== 'undefined' ? sortedCollegeList : [];
+
+    input.addEventListener('input', () => {
+        const query = input.value.trim().toLowerCase();
+        selectedIndex = -1;
+
+        if (query.length < 2) {
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.classList.remove('active');
+            return;
+        }
+
+        // Filter colleges - match start of word or contains
+        const filtered = colleges.filter(college => {
+            const lower = college.toLowerCase();
+            return lower.includes(query) ||
+                lower.split(' ').some(word => word.startsWith(query));
+        }).slice(0, 8); // Show max 8 suggestions
+
+        if (filtered.length === 0) {
+            suggestionsDiv.innerHTML = '<div class="suggestion-item no-match">No matching colleges found</div>';
+            suggestionsDiv.classList.add('active');
+            return;
+        }
+
+        suggestionsDiv.innerHTML = filtered.map((college, index) => `
+            <div class="suggestion-item" data-index="${index}" data-value="${college}">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                    <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+                <span>${highlightMatch(college, query)}</span>
+            </div>
+        `).join('');
+
+        suggestionsDiv.classList.add('active');
+
+        // Add click handlers
+        suggestionsDiv.querySelectorAll('.suggestion-item[data-value]').forEach(item => {
+            item.addEventListener('click', () => {
+                input.value = item.dataset.value;
+                suggestionsDiv.innerHTML = '';
+                suggestionsDiv.classList.remove('active');
+            });
+        });
+    });
+
+    // Keyboard navigation
+    input.addEventListener('keydown', (e) => {
+        const items = suggestionsDiv.querySelectorAll('.suggestion-item[data-value]');
+
+        if (e.key === 'ArrowDown') {
+            e.preventDefault();
+            selectedIndex = Math.min(selectedIndex + 1, items.length - 1);
+            updateSelectedItem(items);
+        } else if (e.key === 'ArrowUp') {
+            e.preventDefault();
+            selectedIndex = Math.max(selectedIndex - 1, 0);
+            updateSelectedItem(items);
+        } else if (e.key === 'Enter' && selectedIndex >= 0) {
+            e.preventDefault();
+            if (items[selectedIndex]) {
+                input.value = items[selectedIndex].dataset.value;
+                suggestionsDiv.innerHTML = '';
+                suggestionsDiv.classList.remove('active');
+            }
+        } else if (e.key === 'Escape') {
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.classList.remove('active');
+        }
+    });
+
+    function updateSelectedItem(items) {
+        items.forEach((item, index) => {
+            item.classList.toggle('selected', index === selectedIndex);
+        });
+        if (items[selectedIndex]) {
+            items[selectedIndex].scrollIntoView({ block: 'nearest' });
+        }
+    }
+
+    // Close on click outside
+    document.addEventListener('click', (e) => {
+        if (!input.contains(e.target) && !suggestionsDiv.contains(e.target)) {
+            suggestionsDiv.innerHTML = '';
+            suggestionsDiv.classList.remove('active');
+        }
+    });
+}
+
+function highlightMatch(text, query) {
+    const regex = new RegExp(`(${query})`, 'gi');
+    return text.replace(regex, '<strong>$1</strong>');
+}
+
 // ===== Initialize =====
 document.addEventListener('DOMContentLoaded', () => {
     checkAuthState();
     checkVerificationStatus();
     initPublicColleges();
+    initCollegeAutocomplete();
 
     // Add animation classes after page load
     setTimeout(() => {

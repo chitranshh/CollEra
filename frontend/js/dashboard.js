@@ -1280,11 +1280,53 @@ const nirfColleges = [
 let collegeFilter = 'all';
 let collegeSearchTerm = '';
 
+// Generate comprehensive colleges list combining NIRF data with the full college list
+function getAllColleges() {
+    // Keep existing NIRF colleges with their detailed data
+    const nirfCollegesMap = new Map(nirfColleges.map(c => [c.name.toLowerCase(), c]));
+
+    // Add remaining colleges from the comprehensive list
+    const allColleges = typeof sortedCollegeList !== 'undefined' ? sortedCollegeList : [];
+    let rankCounter = nirfColleges.length + 1;
+
+    const additionalColleges = allColleges
+        .filter(name => !nirfCollegesMap.has(name.toLowerCase()))
+        .map(name => ({
+            rank: rankCounter++,
+            name: name,
+            location: 'India',
+            type: guessCollegeType(name),
+            category: guessCollegeCategory(name),
+            score: null,
+            established: null
+        }));
+
+    return [...nirfColleges, ...additionalColleges];
+}
+
+function guessCollegeType(name) {
+    const lower = name.toLowerCase();
+    if (lower.includes('iim') || lower.includes('management') || lower.includes('business')) return 'management';
+    if (lower.includes('medical') || lower.includes('aiims') || lower.includes('health')) return 'medical';
+    if (lower.includes('university') || lower.includes('vishwavidyalaya')) return 'university';
+    return 'engineering';
+}
+
+function guessCollegeCategory(name) {
+    const lower = name.toLowerCase();
+    if (lower.includes('iim') || lower.includes('management') || lower.includes('business')) return 'management';
+    if (lower.includes('medical') || lower.includes('aiims') || lower.includes('health')) return 'medical';
+    if (lower.includes('university') || lower.includes('vishwavidyalaya')) return 'university';
+    return 'engineering';
+}
+
+const allCollegesData = getAllColleges();
+
 function renderColleges() {
     const grid = document.getElementById('collegesGrid');
     if (!grid) return;
 
-    let filteredColleges = nirfColleges;
+    let filteredColleges = allCollegesData;
 
     // Apply category filter
     if (collegeFilter !== 'all') {
@@ -1298,10 +1340,13 @@ function renderColleges() {
         const search = collegeSearchTerm.toLowerCase();
         filteredColleges = filteredColleges.filter(c =>
             c.name.toLowerCase().includes(search) ||
-            c.location.toLowerCase().includes(search) ||
+            (c.location && c.location.toLowerCase().includes(search)) ||
             c.type.toLowerCase().includes(search)
         );
     }
+
+    // Limit to 50 colleges for performance
+    filteredColleges = filteredColleges.slice(0, 50);
 
     if (filteredColleges.length === 0) {
         grid.innerHTML = `
@@ -1337,9 +1382,15 @@ function createCollegeCard(college) {
     );
     const yourCollegeBadge = isUserCollege ? '<span class="your-college-badge">✓ Your College</span>' : '';
 
+    // Handle colleges with and without NIRF data
+    const hasNirfData = college.score !== null;
+    const scoreDisplay = hasNirfData ? college.score : '—';
+    const establishedDisplay = college.established || '—';
+    const locationDisplay = college.location || 'India';
+
     return `
-        <div class="college-card" onclick="openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${college.location}', ${college.score}, ${college.established}, ${college.rank})">
-            <div class="college-rank ${rankClass}">#${college.rank}</div>
+        <div class="college-card" onclick="openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${locationDisplay}', ${college.score || 0}, ${college.established || 0}, ${college.rank})">
+            <div class="college-rank ${rankClass}">${hasNirfData ? '#' + college.rank : ''}</div>
             <div class="college-icon">${typeIcons[college.type] || '🏫'}</div>
             <h3 class="college-name">${college.name}${yourCollegeBadge}</h3>
             <div class="college-location">
@@ -1347,20 +1398,22 @@ function createCollegeCard(college) {
                     <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
                     <circle cx="12" cy="10" r="3" />
                 </svg>
-                ${college.location}
+                ${locationDisplay}
             </div>
             <span class="college-type ${college.type}">${college.type.charAt(0).toUpperCase() + college.type.slice(1)}</span>
+            ${hasNirfData ? `
             <div class="college-stats">
                 <div class="college-stat">
-                    <span class="college-stat-value">${college.score}</span>
+                    <span class="college-stat-value">${scoreDisplay}</span>
                     <span class="college-stat-label">NIRF Score</span>
                 </div>
                 <div class="college-stat">
-                    <span class="college-stat-value">${college.established}</span>
+                    <span class="college-stat-value">${establishedDisplay}</span>
                     <span class="college-stat-label">Established</span>
                 </div>
             </div>
-            <button class="view-reviews-btn" onclick="event.stopPropagation(); openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${college.location}', ${college.score}, ${college.established}, ${college.rank})">
+            ` : ''}
+            <button class="view-reviews-btn" onclick="event.stopPropagation(); openCollegeDetails('${encodeURIComponent(college.name)}', '${college.type}', '${locationDisplay}', ${college.score || 0}, ${college.established || 0}, ${college.rank})">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                 </svg>
