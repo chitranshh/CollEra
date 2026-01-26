@@ -1,5 +1,10 @@
 // ===== CollEra App JavaScript =====
 
+// ===== API Configuration =====
+const API_BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : '';
+
 // ===== IMMEDIATE AUTH CHECK - Redirect logged-in users to dashboard =====
 (function () {
     const token = localStorage.getItem('token');
@@ -193,7 +198,7 @@ async function handleLogin(event) {
     btn.disabled = true;
 
     try {
-        const response = await fetch('/api/auth/login', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -280,7 +285,7 @@ async function handleRegister(event) {
     btn.disabled = true;
 
     try {
-        const response = await fetch('/api/auth/register', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -344,7 +349,7 @@ function isValidCollegeEmail(email) {
 // ===== Resend Verification =====
 async function resendVerification(email) {
     try {
-        const response = await fetch('/api/auth/resend-verification', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/resend-verification`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -369,7 +374,7 @@ function showForgotPassword() {
 
 async function forgotPassword(email) {
     try {
-        const response = await fetch('/api/auth/forgot-password', {
+        const response = await fetch(`${API_BASE_URL}/api/auth/forgot-password`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -606,7 +611,7 @@ async function openPublicCollegeReviews(collegeName, category) {
     document.getElementById('publicAvgRatings').innerHTML = '';
 
     try {
-        const response = await fetch(`/api/reviews/public/${encodeURIComponent(collegeName)}`);
+        const response = await fetch(`${API_BASE_URL}/api/reviews/public/${encodeURIComponent(collegeName)}`);
         const data = await response.json();
 
         if (data.success) {

@@ -1,5 +1,10 @@
 // ===== Dashboard JavaScript =====
 
+// ===== API Configuration =====
+const API_BASE_URL = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : '';
+
 // ===== State Management =====
 let currentUser = null;
 let users = [];
@@ -69,7 +74,7 @@ async function apiCall(endpoint, method = 'GET', body = null) {
     }
 
     try {
-        const response = await fetch(endpoint, options);
+        const response = await fetch(`${API_BASE_URL}${endpoint}`, options);
         const data = await response.json();
 
         if (response.status === 401) {
@@ -101,8 +106,12 @@ function updateUserUI() {
 
     // Update avatar
     const userAvatar = document.getElementById('userAvatar');
-    const initials = `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase();
-    userAvatar.textContent = initials;
+    if (currentUser.profilePicture) {
+        userAvatar.innerHTML = `<img src="${currentUser.profilePicture}" alt="Profile" class="avatar-img">`;
+    } else {
+        const initials = `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase();
+        userAvatar.textContent = initials;
+    }
 
     // Update name
     const userName = document.getElementById('userName');
@@ -705,29 +714,61 @@ function showNotifications() {
 // ===== Profile Menu Functions =====
 function showMyAccount() {
     // Close the dropdown
-    document.getElementById('userDropdown').classList.remove('active');
-    document.querySelector('.user-menu').classList.remove('active');
+    try {
+        document.getElementById('userDropdown').classList.remove('active');
+        document.querySelector('.user-menu').classList.remove('active');
+    } catch (e) { }
 
-    // Show My Account modal
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
+    // Use currentUser for up-to-date info
+    const user = currentUser || JSON.parse(localStorage.getItem('user') || '{}');
     showModal('My Account', `
-        <div class="account-info">
-            <div class="account-avatar">${user.name ? user.name.charAt(0).toUpperCase() : 'U'}</div>
+        <form id="myAccountForm" class="account-info">
+            <div class="account-avatar">${user.profilePicture ? `<img src="${user.profilePicture}" alt="Profile" class="avatar-img">` : (user.name ? user.name.charAt(0).toUpperCase() : 'U')}</div>
             <div class="account-details">
-                <h3>${user.name || 'User'}</h3>
-                <p class="account-email">${user.email || 'No email'}</p>
-                <p class="account-college">${user.college || 'No college'}</p>
-                <p class="account-year">Year: ${user.year || 'N/A'}</p>
+                <label>Name</label>
+                <input type="text" id="accountName" value="${user.name || ''}" placeholder="Your name" required>
+                <label>Email</label>
+                <input type="email" value="${user.email || ''}" disabled>
+                <label>College</label>
+                <input type="text" id="accountCollege" value="${user.college || ''}" placeholder="Your college">
+                <label>Date of Birth</label>
+                <input type="date" id="accountDob" value="${user.dob ? new Date(user.dob).toISOString().split('T')[0] : ''}">
+                <label>Year</label>
+                <input type="number" id="accountYear" value="${user.year || ''}" min="1" max="10">
                 <p class="account-joined">Joined: ${user.createdAt ? new Date(user.createdAt).toLocaleDateString() : 'N/A'}</p>
+                <button type="submit" class="btn btn-primary btn-sm" style="margin-top:12px;">Save Changes</button>
             </div>
-        </div>
+        </form>
     `);
+    setTimeout(() => {
+        const form = document.getElementById('myAccountForm');
+        if (form) {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = document.getElementById('accountName').value;
+                const college = document.getElementById('accountCollege').value;
+                const dob = document.getElementById('accountDob').value;
+                const year = document.getElementById('accountYear').value;
+                const updateData = { name, college, dob, year: year ? parseInt(year) : undefined };
+                const data = await apiCall('/api/users/profile', 'PUT', updateData);
+                if (data && data.success) {
+                    showToast('Account updated!', 'success');
+                    await loadCurrentUser();
+                    closeModal();
+                } else {
+                    showToast('Failed to update account', 'error');
+                }
+            });
+        }
+    }, 100);
 }
 
 function showEditProfile() {
     // Close the dropdown
-    document.getElementById('userDropdown').classList.remove('active');
-    document.querySelector('.user-menu').classList.remove('active');
+    try {
+        document.getElementById('userDropdown').classList.remove('active');
+        document.querySelector('.user-menu').classList.remove('active');
+    } catch (e) { }
 
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const dobValue = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
@@ -2274,7 +2315,7 @@ function initSocketConnection() {
     const token = localStorage.getItem('token');
     if (!token) return;
 
-    socket = io({
+    socket = io(API_BASE_URL || window.location.origin, {
         auth: { token }
     });
 
