@@ -2236,7 +2236,15 @@ function createReviewItem(review) {
 
 // Open review modal for user's own college (from sidebar)
 function openMyCollegeReview() {
-    if (!currentUser?.collegeName) {
+    // Ensure user is loaded
+    if (!currentUser) {
+        // Try to load user and retry
+        loadCurrentUser().then(() => {
+            openMyCollegeReview();
+        });
+        return;
+    }
+    if (!currentUser.collegeName) {
         showToast('Please complete your profile with college name first', 'error');
         return;
     }
@@ -2245,8 +2253,14 @@ function openMyCollegeReview() {
     currentViewingCollege = { name: currentUser.collegeName };
 
     resetReviewForm();
-    document.getElementById('reviewCollegeName').textContent = currentUser.collegeName;
-    document.getElementById('reviewModalOverlay').style.display = 'flex';
+    const collegeNameElem = document.getElementById('reviewCollegeName');
+    const modalOverlay = document.getElementById('reviewModalOverlay');
+    if (!collegeNameElem || !modalOverlay) {
+        showToast('Review modal is not available. Please reload the page.', 'error');
+        return;
+    }
+    collegeNameElem.textContent = currentUser.collegeName;
+    modalOverlay.style.display = 'flex';
 
     // Re-initialize star ratings
     setTimeout(initStarRatings, 100);
