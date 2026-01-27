@@ -1,9 +1,30 @@
+// Attach review modal functions to window for modal button compatibility
+window.openReviewModal = openReviewModal;
+window.closeReviewModal = closeReviewModal;
+window.submitReview = submitReview;
+// Attach modal and college functions to window for inline onclick compatibility
+window.openCollegeDetails = openCollegeDetails;
+window.closeCollegeDetails = typeof closeCollegeDetails !== 'undefined' ? closeCollegeDetails : () => { };
+window.openReviewModal = typeof openReviewModal !== 'undefined' ? openReviewModal : () => { };
+window.handleCollegeSearch = handleCollegeSearch;
+window.filterColleges = filterColleges;
+// Attach modal and college functions to window for inline onclick compatibility
+window.openCollegeDetails = openCollegeDetails;
+window.closeCollegeDetails = closeCollegeDetails;
+window.openReviewModal = openReviewModal;
+window.handleCollegeSearch = handleCollegeSearch;
+window.filterColleges = filterColleges;
 // ===== Dashboard JavaScript =====
 
 // ===== API Configuration =====
-const API_BASE_URL = window.location.hostname === 'localhost'
-    ? 'http://localhost:3000'
-    : '';
+const API_BASE_URL =
+    window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+        ? 'http://localhost:3000'
+        : window.location.hostname.match(/^192\.168\.|^10\.|^172\.(1[6-9]|2[0-9]|3[01])\./)
+            ? 'http://localhost:3000'
+            : window.location.origin.includes('collera')
+                ? '' // production: same origin
+                : 'http://localhost:3000'; // fallback for dev
 
 // ===== State Management =====
 let currentUser = null;
@@ -723,14 +744,16 @@ function showMyAccount() {
     const user = currentUser || JSON.parse(localStorage.getItem('user') || '{}');
     showModal('My Account', `
         <form id="myAccountForm" class="account-info">
-            <div class="account-avatar">${user.profilePicture ? `<img src="${user.profilePicture}" alt="Profile" class="avatar-img">` : (user.name ? user.name.charAt(0).toUpperCase() : 'U')}</div>
+            <div class="account-avatar">${user.profilePicture ? `<img src="${user.profilePicture}" alt="Profile" class="avatar-img">` : ((user.firstName ? user.firstName.charAt(0) : '') + (user.lastName ? user.lastName.charAt(0) : '') || 'U')}</div>
             <div class="account-details">
-                <label>Name</label>
-                <input type="text" id="accountName" value="${user.name || ''}" placeholder="Your name" required>
+                <label>First Name</label>
+                <input type="text" id="accountFirstName" value="${user.firstName || ''}" placeholder="First name" required>
+                <label>Last Name</label>
+                <input type="text" id="accountLastName" value="${user.lastName || ''}" placeholder="Last name" required>
                 <label>Email</label>
                 <input type="email" value="${user.email || ''}" disabled>
                 <label>College</label>
-                <input type="text" id="accountCollege" value="${user.college || ''}" placeholder="Your college">
+                <input type="text" id="accountCollege" value="${user.collegeName || ''}" placeholder="Your college">
                 <label>Date of Birth</label>
                 <input type="date" id="accountDob" value="${user.dob ? new Date(user.dob).toISOString().split('T')[0] : ''}">
                 <label>Year</label>
@@ -745,11 +768,12 @@ function showMyAccount() {
         if (form) {
             form.addEventListener('submit', async (e) => {
                 e.preventDefault();
-                const name = document.getElementById('accountName').value;
-                const college = document.getElementById('accountCollege').value;
+                const firstName = document.getElementById('accountFirstName').value;
+                const lastName = document.getElementById('accountLastName').value;
+                const collegeName = document.getElementById('accountCollege').value;
                 const dob = document.getElementById('accountDob').value;
                 const year = document.getElementById('accountYear').value;
-                const updateData = { name, college, dob, year: year ? parseInt(year) : undefined };
+                const updateData = { firstName, lastName, collegeName, dob, year: year ? parseInt(year) : undefined };
                 const data = await apiCall('/api/users/profile', 'PUT', updateData);
                 if (data && data.success) {
                     showToast('Account updated!', 'success');
