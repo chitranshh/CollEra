@@ -2525,7 +2525,7 @@ function renderChatWindow() {
             <div class="chat-header">
                 <div class="chat-header-info">
                     <div class="chat-avatar">
-                        <span class="avatar-initials">${initials}</span>
+                        ${currentChatPartner.profilePicture ? `<img src="${currentChatPartner.profilePicture}" alt="Profile" class="avatar-img">` : `<span class="avatar-initials">${initials}</span>`}
                         <span class="online-dot ${isOnline ? '' : 'offline'}"></span>
                     </div>
                     <div class="chat-user-info">
