@@ -25,6 +25,7 @@ router.post('/request/:userId', protect, async (req, res) => {
             });
         }
 
+
         // Check if already connected
         if (req.user.connections.includes(targetUserId)) {
             return res.status(400).json({
@@ -38,6 +39,14 @@ router.post('/request/:userId', protect, async (req, res) => {
             return res.status(400).json({
                 success: false,
                 message: 'Connection request already sent'
+            });
+        }
+
+        // Check if the target user has already sent a request to the current user
+        if (req.user.pendingConnections.includes(targetUserId)) {
+            return res.status(400).json({
+                success: false,
+                message: 'This user has already sent you a request. Please accept their request to connect.'
             });
         }
 
@@ -80,6 +89,7 @@ router.post('/accept/:userId', protect, async (req, res) => {
             });
         }
 
+
         // Remove from pending and add to connections for current user
         await User.findByIdAndUpdate(req.user._id, {
             $pull: { pendingConnections: requesterId },
@@ -90,6 +100,11 @@ router.post('/accept/:userId', protect, async (req, res) => {
         await User.findByIdAndUpdate(requesterId, {
             $pull: { sentRequests: req.user._id },
             $addToSet: { connections: req.user._id }
+        });
+
+        // Also, make sure the current user does not have the requester in their sentRequests (in case of cross-requests)
+        await User.findByIdAndUpdate(req.user._id, {
+            $pull: { sentRequests: requesterId }
         });
 
         res.json({

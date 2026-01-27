@@ -20,7 +20,7 @@ const userSchema = new mongoose.Schema({
         unique: true,
         lowercase: true,
         trim: true,
-        match: [/^[\w-\.]+@[\w-]+\.edu\.in$|^[\w-\.]+@[\w-]+\.ac\.in$|^[\w-\.]+@[\w-]+\.edu$/, 'Please use a valid college email (.edu.in, .ac.in, or .edu)']
+        match: [/^[\w.-]+@([\w-]+\.)*[\w-]+\.(edu\.in|ac\.in|edu)$/i, 'Please use a valid college email (.edu.in, .ac.in, or .edu)']
     },
     password: {
         type: String,

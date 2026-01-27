@@ -98,7 +98,7 @@ const io = new Server(server, {
     cors: {
         origin: process.env.NODE_ENV === 'production'
             ? `https://${process.env.DOMAIN}`
-            : 'http://localhost:3000',
+            : [/^http:\/\/localhost:\d+$/],
         credentials: true
     }
 });

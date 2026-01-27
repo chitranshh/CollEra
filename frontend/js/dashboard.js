@@ -125,13 +125,16 @@ async function loadCurrentUser() {
 function updateUserUI() {
     if (!currentUser) return;
 
-    // Update avatar
+    // Update main avatar
     const userAvatar = document.getElementById('userAvatar');
+    const postUserAvatar = document.getElementById('postUserAvatar');
+    const initials = `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase();
     if (currentUser.profilePicture) {
         userAvatar.innerHTML = `<img src="${currentUser.profilePicture}" alt="Profile" class="avatar-img">`;
+        if (postUserAvatar) postUserAvatar.innerHTML = `<img src="${currentUser.profilePicture}" alt="Profile" class="avatar-img">`;
     } else {
-        const initials = `${currentUser.firstName[0]}${currentUser.lastName[0]}`.toUpperCase();
         userAvatar.textContent = initials;
+        if (postUserAvatar) postUserAvatar.textContent = initials;
     }
 
     // Update name
