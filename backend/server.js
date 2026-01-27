@@ -103,7 +103,7 @@ const io = new Server(server, {
     }
 });
 
-// Store connected users
+// Store connected users: Map<userId, Set<socketId>>
 const connectedUsers = new Map();
 
 // Socket.io authentication middleware
@@ -133,8 +133,11 @@ io.on('connection', async (socket) => {
     const userId = socket.user._id.toString();
     console.log(`🔌 User connected: ${socket.user.firstName} ${socket.user.lastName}`);
 
-    // Store socket connection
-    connectedUsers.set(userId, socket.id);
+    // Store socket connection (support multiple sockets per user)
+    if (!connectedUsers.has(userId)) {
+        connectedUsers.set(userId, new Set());
+    }
+    connectedUsers.get(userId).add(socket.id);
 
     // Update user online status
     await User.findByIdAndUpdate(userId, {
@@ -310,21 +313,29 @@ io.on('connection', async (socket) => {
     socket.on('disconnect', async () => {
         console.log(`🔌 User disconnected: ${socket.user.firstName} ${socket.user.lastName}`);
 
-        connectedUsers.delete(userId);
-
-        // Update user offline status
-        await User.findByIdAndUpdate(userId, {
-            isOnline: false,
-            lastSeen: new Date()
-        });
-
-        // Notify connections that user is offline
-        socket.user.connections.forEach(connectionId => {
-            const connectionSocketId = connectedUsers.get(connectionId.toString());
-            if (connectionSocketId) {
-                io.to(connectionSocketId).emit('user_offline', { userId });
+        // Remove this socket from the user's set
+        const userSockets = connectedUsers.get(userId);
+        if (userSockets) {
+            userSockets.delete(socket.id);
+            if (userSockets.size === 0) {
+                connectedUsers.delete(userId);
+                // Update user offline status
+                await User.findByIdAndUpdate(userId, {
+                    isOnline: false,
+                    lastSeen: new Date()
+                });
+                // Notify connections that user is offline
+                socket.user.connections.forEach(connectionId => {
+                    const connectionSockets = connectedUsers.get(connectionId.toString());
+                    if (connectionSockets && connectionSockets.size > 0) {
+                        // Notify all sockets of the connection
+                        connectionSockets.forEach(sockId => {
+                            io.to(sockId).emit('user_offline', { userId });
+                        });
+                    }
+                });
             }
-        });
+        }
     });
 });
 
