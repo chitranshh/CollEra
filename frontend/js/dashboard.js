@@ -2457,11 +2457,16 @@ function renderConversations() {
             (conv.lastMessage.sender === currentUser._id ? 'You: ' : '') + truncate(conv.lastMessage.content, 30) :
             'No messages yet';
 
+        // Show profile picture if available, otherwise initials
+        const avatarHtml = conv.participant?.profilePicture
+            ? `<img src="${conv.participant.profilePicture}" alt="Profile" class="avatar-img">`
+            : initials;
+
         return `
             <div class="conversation-item ${currentConversation?._id === conv._id ? 'active' : ''}" 
                  onclick="openConversation('${conv._id}', '${conv.participant?._id}')">
                 <div class="conversation-avatar">
-                    ${initials}
+                    ${avatarHtml}
                     <span class="online-dot ${isOnline ? '' : 'offline'}"></span>
                 </div>
                 <div class="conversation-info">
