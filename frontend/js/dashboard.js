@@ -1132,6 +1132,7 @@ function renderFeed() {
 function renderConnectionSuggestionsFeed(feed) {
     const connectionCount = currentUser?.connections?.length || 0;
 
+
     feed.innerHTML = `
         <div class="feed-welcome-card">
             <div class="welcome-header">
@@ -1155,8 +1156,9 @@ function renderConnectionSuggestionsFeed(feed) {
                 <a href="#" onclick="switchToTab('explore'); return false;">See all</a>
             </div>
             <div class="feed-suggestions-grid" id="feedSuggestionsGrid">
-                <div class="loading-spinner small">
+                <div class="loading-spinner small loading-rotate-group">
                     <div class="spinner"></div>
+                    <span class="loading-text">Loading...</span>
                 </div>
             </div>
         </div>
@@ -1166,8 +1168,9 @@ function renderConnectionSuggestionsFeed(feed) {
                 <h3>Students from your college</h3>
             </div>
             <div class="feed-suggestions-grid" id="sameCollegeSuggestionsGrid">
-                <div class="loading-spinner small">
+                <div class="loading-spinner small loading-rotate-group">
                     <div class="spinner"></div>
+                    <span class="loading-text">Loading...</span>
                 </div>
             </div>
         </div>

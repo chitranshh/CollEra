@@ -895,6 +895,7 @@
 }
 
 /* Loading Spinner */
+
 .loading-spinner {
     text-align: center;
     padding: 40px;
@@ -918,6 +919,39 @@
     width: 24px;
     height: 24px;
     border-width: 2px;
+}
+
+/* Animate spinner and loading text together */
+.loading-rotate-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    /* The group will rotate as a whole */
+    animation: spin 0.8s linear infinite;
+}
+
+.loading-rotate-group .spinner {
+    margin: 0;
+    /* Remove margin so text is close to spinner */
+}
+
+.loading-rotate-group .loading-text {
+    font-size: 14px;
+    color: var(--text-muted);
+    margin-top: 4px;
+    letter-spacing: 1px;
+}
+
+@keyframes spin {
+    0% {
+        transform: rotate(0deg);
+    }
+
+    100% {
+        transform: rotate(360deg);
+    }
 }
 
 /* Load More */

@@ -1,3 +1,29 @@
+// ===== Mobile Device Warning Popup =====
+function showMobileWarning() {
+    if (window.innerWidth <= 700 || /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        if (!document.getElementById('mobile-warning-popup')) {
+            const popup = document.createElement('div');
+            popup.id = 'mobile-warning-popup';
+            popup.style.position = 'fixed';
+            popup.style.top = '0';
+            popup.style.left = '0';
+            popup.style.width = '100vw';
+            popup.style.background = 'rgba(30,30,30,0.98)';
+            popup.style.color = '#fff';
+            popup.style.zIndex = '9999';
+            popup.style.padding = '18px 10px';
+            popup.style.textAlign = 'center';
+            popup.style.fontSize = '17px';
+            popup.style.fontWeight = '600';
+            popup.style.boxShadow = '0 2px 12px rgba(0,0,0,0.2)';
+            popup.innerHTML = 'Use <b>Desktop Site</b> for Better View or access on desktop.';
+            document.body.appendChild(popup);
+            setTimeout(() => { popup.remove(); }, 7000);
+        }
+    }
+}
+window.addEventListener('DOMContentLoaded', showMobileWarning);
+window.addEventListener('resize', showMobileWarning);
 // ===== CollEra App JavaScript =====
 
 // ===== API Configuration =====
