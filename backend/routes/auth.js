@@ -122,11 +122,17 @@ router.post('/register', async (req, res) => {
         });
 
         // Send verification email
+
         try {
             await sendVerificationEmail(user.email, verificationToken, firstName);
         } catch (emailError) {
             console.error('Email sending failed:', emailError);
-            // Don't fail registration if email fails
+            // If email fails, delete the user so they can try again
+            await User.findByIdAndDelete(user._id);
+            return res.status(500).json({
+                success: false,
+                message: 'Registration failed: Could not send verification email. Please try again later.'
+            });
         }
 
         res.status(201).json({
