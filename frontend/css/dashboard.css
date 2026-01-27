@@ -922,19 +922,18 @@
 }
 
 /* Animate spinner and loading text together */
+
 .loading-rotate-group {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     gap: 6px;
-    /* The group will rotate as a whole */
-    animation: spin 0.8s linear infinite;
 }
 
 .loading-rotate-group .spinner {
     margin: 0;
-    /* Remove margin so text is close to spinner */
+    animation: spin 0.8s linear infinite;
 }
 
 .loading-rotate-group .loading-text {
