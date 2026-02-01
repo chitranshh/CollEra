@@ -31,6 +31,22 @@ router.get('/conversations', protect, async (req, res) => {
             };
         });
 
+        // Add bot as a special conversation
+        formattedConversations.unshift({
+            _id: 'mental-health-bot',
+            participant: {
+                firstName: 'Mental Health Bot',
+                lastName: '',
+                profilePicture: '',
+                isOnline: true,
+                lastSeen: new Date(),
+                _id: 'bot'
+            },
+            lastMessage: null,
+            lastMessageAt: null,
+            unreadCount: 0
+        });
+
         res.json({
             success: true,
             data: formattedConversations
@@ -55,6 +71,18 @@ router.get('/messages/:conversationId', protect, async (req, res) => {
         const skip = (page - 1) * limit;
 
         // Verify user is part of conversation
+        if (conversationId === 'mental-health-bot') {
+            // Return empty messages for bot (or could store user-bot history)
+            return res.json({
+                success: true,
+                data: {
+                    messages: [],
+                    pagination: { page, limit, total: 0, pages: 1 }
+                }
+            });
+        }
+
+        // ...existing code for normal conversations...
         const conversation = await Conversation.findOne({
             _id: conversationId,
             participants: req.user._id

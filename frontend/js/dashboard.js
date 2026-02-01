@@ -2510,6 +2510,14 @@ async function openConversation(conversationId, participantId) {
     currentConversation = conv;
     currentChatPartner = conv.participant;
 
+    // If bot conversation, set up bot chat
+    if (conversationId === 'mental-health-bot') {
+        // Render chat window for bot
+        renderChatWindow();
+        // No messages to load, but could load from localStorage if desired
+        return;
+    }
+
     // Mark conversation as active in list
     document.querySelectorAll('.conversation-item').forEach(item => {
         item.classList.remove('active');
@@ -2708,6 +2716,32 @@ async function sendMessage() {
     // Clear input
     input.value = '';
 
+    // If bot conversation, use bot API
+    if (currentConversation._id === 'mental-health-bot') {
+        appendMessageToChat({ content, sender: { _id: currentUser._id }, createdAt: new Date() }, true);
+        try {
+            const token = localStorage.getItem('token');
+            const res = await fetch('/api/bot/chat', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({ message: content })
+            });
+            const data = await res.json();
+            if (data.success) {
+                appendMessageToChat({ content: data.response, sender: { _id: 'bot', firstName: data.bot }, createdAt: new Date() }, false);
+            } else {
+                appendMessageToChat({ content: 'Sorry, I could not respond right now.', sender: { _id: 'bot', firstName: 'Bot' }, createdAt: new Date() }, false);
+            }
+        } catch {
+            appendMessageToChat({ content: 'Network error. Please try again.', sender: { _id: 'bot', firstName: 'Bot' }, createdAt: new Date() }, false);
+        }
+        return;
+    }
+
+    // ...existing code for normal conversations...
     // Send via socket for real-time
     if (socket) {
         socket.emit('send_message', {
