@@ -2507,16 +2507,18 @@ async function openConversation(conversationId, participantId) {
         return;
     }
 
-    currentConversation = conv;
-    currentChatPartner = conv.participant;
-
-    // If bot conversation, set up bot chat
+    // If bot conversation, set up bot chat and set persona name
     if (conversationId === 'mental-health-bot') {
-        // Render chat window for bot
+        let botName = 'SupportBot';
+        if (currentUser?.pronouns === 'she/her') botName = 'Jake';
+        else if (currentUser?.pronouns === 'he/him') botName = 'Mary';
+        currentConversation = { _id: 'mental-health-bot', participant: { firstName: botName, lastName: '', isOnline: true, profilePicture: '', _id: 'bot' } };
+        currentChatPartner = currentConversation.participant;
         renderChatWindow();
-        // No messages to load, but could load from localStorage if desired
         return;
     }
+    currentConversation = conv;
+    currentChatPartner = conv.participant;
 
     // Mark conversation as active in list
     document.querySelectorAll('.conversation-item').forEach(item => {
