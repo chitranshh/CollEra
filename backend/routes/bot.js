@@ -4,7 +4,7 @@ const { protect } = require('../middleware/auth');
 const User = require('../models/User');
 
 const axios = require('axios');
-const GROQ_API_KEY = '***REMOVED***';
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 function getBotName(gender) {
