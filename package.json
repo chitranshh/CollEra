@@ -16,5 +16,8 @@
         "india"
     ],
     "author": "CollEra Team",
-    "license": "MIT"
+    "license": "MIT",
+    "dependencies": {
+        "express": "^5.2.1"
+    }
 }

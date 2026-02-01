@@ -18,6 +18,7 @@ const connectionRoutes = require('./routes/connections');
 const postRoutes = require('./routes/posts');
 const reviewRoutes = require('./routes/reviews');
 const chatRoutes = require('./routes/chat');
+const botRoutes = require('./routes/bot');
 
 // Import models
 const User = require('./models/User');
@@ -65,6 +66,7 @@ app.use('/api/connections', connectionRoutes);
 app.use('/api/posts', postRoutes);
 app.use('/api/reviews', reviewRoutes);
 app.use('/api/chat', chatRoutes);
+app.use('/api/bot', botRoutes);
 
 // Health check endpoint (for Render)
 app.get('/health', (req, res) => {
