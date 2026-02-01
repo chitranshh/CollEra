@@ -8,10 +8,10 @@ const GROQ_API_KEY = process.env.GROQ_API_KEY;
 const GROQ_API_URL = 'https://api.groq.com/openai/v1/chat/completions';
 
 function getBotName(gender) {
-    // Jake for female, Mary for male
+    // Jake for female, Mary for male, Mental Health Bot for prefer not to say
     if (gender === 'female') return 'Jake';
     if (gender === 'male') return 'Mary';
-    return 'SupportBot';
+    return 'Mental Health Bot';
 }
 
 // @route POST /api/bot/chat
@@ -24,11 +24,8 @@ router.post('/chat', protect, async (req, res) => {
             return res.status(400).json({ success: false, message: 'Message is required.' });
         }
         const user = await User.findById(req.user._id);
-        // Determine gender from pronouns or add a gender field if needed
-        let gender = 'other';
-        if (user.pronouns === 'she/her') gender = 'female';
-        else if (user.pronouns === 'he/him') gender = 'male';
-        // Use Groq AI for response
+        // Use gender field only
+        let gender = user.gender || 'prefer_not_to_say';
         const botName = getBotName(gender);
         try {
             const groqRes = await axios.post(GROQ_API_URL, {

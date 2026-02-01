@@ -32,8 +32,8 @@ router.get('/conversations', protect, async (req, res) => {
         });
 
 
-        // Only show the chatbot as the sole conversation
-        const botConversation = [{
+        // Add bot as a special conversation at the top, then all user conversations
+        formattedConversations.unshift({
             _id: 'mental-health-bot',
             participant: {
                 firstName: 'Mental Health Bot',
@@ -46,10 +46,10 @@ router.get('/conversations', protect, async (req, res) => {
             lastMessage: null,
             lastMessageAt: null,
             unreadCount: 0
-        }];
+        });
         return res.json({
             success: true,
-            data: botConversation
+            data: formattedConversations
         });
 
         res.json({

@@ -51,6 +51,7 @@ function loadExistingData() {
             if (userData.branch) document.getElementById('branch').value = userData.branch;
             if (userData.year) document.getElementById('year').value = userData.year;
             if (userData.course) document.getElementById('course').value = userData.course;
+            if (userData.gender) document.getElementById('gender').value = userData.gender;
             if (userData.pronouns) document.getElementById('pronouns').value = userData.pronouns;
             if (userData.dob) {
                 const date = new Date(userData.dob);
@@ -303,7 +304,12 @@ function updateProgress() {
 function validateStep(step) {
     switch (step) {
         case 1:
-            // Step 1 is optional, just continue
+            // Gender is required
+            const gender = document.getElementById('gender').value;
+            if (!gender) {
+                showToast('Please select your gender', 'error');
+                return false;
+            }
             return true;
         case 2:
             // Step 2 is optional, just continue
@@ -336,6 +342,7 @@ async function completeOnboarding() {
     const profileData = {
         profilePicture: profilePhotoBase64,
         dob: document.getElementById('dob').value || null,
+        gender: document.getElementById('gender').value || '',
         pronouns: document.getElementById('pronouns').value || '',
         bio: document.getElementById('bio').value.trim() || '',
         branch: document.getElementById('branch').value.trim() || '',

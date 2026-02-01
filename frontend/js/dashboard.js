@@ -767,68 +767,71 @@ function showMyAccount() {
         </form>
     `);
     setTimeout(() => {
-        const form = document.getElementById('myAccountForm');
-        if (form) {
-            form.addEventListener('submit', async (e) => {
-                e.preventDefault();
-                const firstName = document.getElementById('accountFirstName').value;
-                const lastName = document.getElementById('accountLastName').value;
-                const collegeName = document.getElementById('accountCollege').value;
-                const dob = document.getElementById('accountDob').value;
-                const year = document.getElementById('accountYear').value;
-                const updateData = { firstName, lastName, collegeName, dob, year: year ? parseInt(year) : undefined };
-                const data = await apiCall('/api/users/profile', 'PUT', updateData);
-                if (data && data.success) {
-                    showToast('Account updated!', 'success');
-                    await loadCurrentUser();
-                    closeModal();
-                } else {
-                    showToast('Failed to update account', 'error');
-                }
-            });
+        const chatArea = document.getElementById('chatArea');
+        const template = document.getElementById('chatWindowTemplate');
+
+        if (!currentChatPartner) {
+            chatArea.innerHTML = '';
+            return;
         }
-    }, 100);
-}
 
-function showEditProfile() {
-    // Close the dropdown
-    try {
-        document.getElementById('userDropdown').classList.remove('active');
-        document.querySelector('.user-menu').classList.remove('active');
-    } catch (e) { }
+        const initials = `${currentChatPartner.firstName[0]}${currentChatPartner.lastName[0]}`.toUpperCase();
+        const isOnline = currentChatPartner.isOnline;
 
-    const user = JSON.parse(localStorage.getItem('user') || '{}');
-    const dobValue = user.dob ? new Date(user.dob).toISOString().split('T')[0] : '';
-
-    showModal('Edit Profile', `
-        <form id="editProfileForm" class="edit-profile-form">
-            <div class="profile-picture-section">
-                <div class="profile-picture-preview" id="profilePicturePreview">
-                    ${user.profilePicture ? `<img src="${user.profilePicture}" alt="Profile">` : `<span>${user.name ? user.name.charAt(0).toUpperCase() : 'U'}</span>`}
+        chatArea.innerHTML = `
+            <div class="chat-window">
+                <div class="chat-header">
+                    <div class="chat-header-info">
+                        <div class="chat-avatar">
+                            ${currentChatPartner.profilePicture ? `<img src="${currentChatPartner.profilePicture}" alt="Profile" class="avatar-img">` : `<span class="avatar-initials">${initials}</span>`}
+                            <span class="online-dot ${isOnline ? '' : 'offline'}"></span>
+                        </div>
+                        <div class="chat-user-info">
+                            <span class="chat-user-name">${currentChatPartner.firstName} ${currentChatPartner.lastName}</span>
+                            <span class="chat-user-status ${isOnline ? 'online' : ''}">${isOnline ? 'Online' : formatLastSeen(currentChatPartner.lastSeen)}</span>
+                        </div>
+                    </div>
+                    <div class="chat-header-actions">
+                        <button class="icon-btn" onclick="viewProfile('${currentChatPartner._id}')" title="View Profile">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                                <circle cx="12" cy="7" r="4" />
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                <div class="profile-picture-upload">
-                    <label for="profilePictureInput" class="btn btn-secondary btn-sm">Change Photo</label>
-                    <input type="file" id="profilePictureInput" accept="image/*" style="display: none;" onchange="handleProfilePictureChange(event)">
-                    <p class="upload-hint">JPG, PNG or GIF. Max 2MB</p>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="loading-spinner small">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div class="typing-indicator" id="typingIndicator" style="display: none;">
+                    <span class="typing-text"></span>
+                    <div class="typing-dots">
+                        <span></span>
+                        <span></span>
+                        <span></span>
+                    </div>
+                </div>
+                <div class="chat-input-area">
+                    <input type="text" id="messageInput" placeholder="Type a message..."
+                        onkeydown="handleMessageKeydown(event)">
+                    <button class="send-btn" onclick="sendMessage()">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="22" y1="2" x2="11" y2="13" />
+                            <polygon points="22 2 15 22 11 13 2 9 22 2" />
+                        </svg>
+                    </button>
                 </div>
             </div>
-            
-            <div class="form-row">
-                <div class="form-group">
-                    <label>Full Name</label>
-                    <input type="text" id="editName" value="${user.name || ''}" placeholder="Your full name">
-                </div>
-                <div class="form-group">
-                    <label>Pronouns</label>
-                    <select id="editPronouns">
-                        <option value="" ${!user.pronouns ? 'selected' : ''}>Select pronouns</option>
+        `;
                         <option value="he/him" ${user.pronouns === 'he/him' ? 'selected' : ''}>He/Him</option>
                         <option value="she/her" ${user.pronouns === 'she/her' ? 'selected' : ''}>She/Her</option>
                         <option value="they/them" ${user.pronouns === 'they/them' ? 'selected' : ''}>They/Them</option>
                         <option value="other" ${user.pronouns === 'other' ? 'selected' : ''}>Other</option>
-                    </select>
-                </div>
-            </div>
+                    </select >
+                </div >
+            </div >
             
             <div class="form-row">
                 <div class="form-group">
@@ -881,8 +884,8 @@ function showEditProfile() {
             </div>
             
             <button type="submit" class="btn btn-primary btn-full">Save Changes</button>
-        </form>
-    `);
+        </form >
+            `);
 
     // Add form submit handler
     setTimeout(() => {
@@ -909,7 +912,7 @@ function handleProfilePictureChange(event) {
     reader.onload = function (e) {
         profilePictureBase64 = e.target.result;
         const preview = document.getElementById('profilePicturePreview');
-        preview.innerHTML = `<img src="${profilePictureBase64}" alt="Profile">`;
+        preview.innerHTML = `< img src = "${profilePictureBase64}" alt = "Profile" > `;
     };
     reader.readAsDataURL(file);
 }
@@ -966,7 +969,7 @@ function showHelpCenter() {
     document.querySelector('.user-menu').classList.remove('active');
 
     showModal('Help Center', `
-        <div class="help-center">
+            < div class="help-center" >
             <div class="help-section">
                 <h4>📧 Contact Support</h4>
                 <p>Email us at <a href="mailto:support@collera.in">support@collera.in</a></p>
@@ -990,8 +993,8 @@ function showHelpCenter() {
                 <h4>📚 About CollEra</h4>
                 <p>CollEra is a platform that connects college students across India for collaboration, networking, and knowledge sharing.</p>
             </div>
-        </div>
-    `);
+        </div >
+            `);
 }
 
 function showDeleteAccount() {
@@ -1000,7 +1003,7 @@ function showDeleteAccount() {
     document.querySelector('.user-menu').classList.remove('active');
 
     showModal('Delete Account', `
-        <div class="delete-account-warning">
+            < div class="delete-account-warning" >
             <div class="warning-icon">⚠️</div>
             <h3>Are you sure you want to delete your account?</h3>
             <p>This action <strong>cannot be undone</strong>. All your data, posts, connections, and messages will be <strong>permanently deleted</strong>.</p>
@@ -1012,8 +1015,8 @@ function showDeleteAccount() {
                 <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-danger" id="deleteAccountBtn" onclick="confirmDeleteAccount()" disabled>Delete My Account</button>
             </div>
-        </div>
-    `);
+        </div >
+            `);
 
     // Enable delete button only when user types DELETE
     const input = document.getElementById('deleteConfirmInput');
@@ -1067,7 +1070,7 @@ function showModal(title, content) {
     modal.className = 'modal-overlay';
     modal.id = 'genericModal';
     modal.innerHTML = `
-        <div class="modal-content">
+            < div class="modal-content" >
             <div class="modal-header">
                 <h2>${title}</h2>
                 <button class="modal-close" onclick="closeModal()">&times;</button>
@@ -1075,8 +1078,8 @@ function showModal(title, content) {
             <div class="modal-body">
                 ${content}
             </div>
-        </div>
-    `;
+        </div >
+            `;
 
     document.body.appendChild(modal);
 
@@ -1095,7 +1098,7 @@ function closeModal() {
 const MIN_CONNECTIONS_FOR_FEED = 3; // Minimum connections before showing full feed
 
 async function loadPosts() {
-    const data = await apiCall(`/api/posts?page=${postsPage}&limit=10`);
+    const data = await apiCall(`/ api / posts ? page = ${ postsPage }& limit=10`);
 
     if (data && data.success) {
         posts = data.data.posts;
@@ -1134,7 +1137,7 @@ function renderConnectionSuggestionsFeed(feed) {
 
 
     feed.innerHTML = `
-        <div class="feed-welcome-card">
+            < div class="feed-welcome-card" >
             <div class="welcome-header">
                 <div class="welcome-icon">👋</div>
                 <div class="welcome-text">
@@ -1148,7 +1151,7 @@ function renderConnectionSuggestionsFeed(feed) {
                 </div>
                 <span class="progress-text">${connectionCount}/${MIN_CONNECTIONS_FOR_FEED} connections</span>
             </div>
-        </div>
+        </div >
 
         <div class="feed-suggestions-section">
             <div class="section-header">
@@ -1174,7 +1177,7 @@ function renderConnectionSuggestionsFeed(feed) {
                 </div>
             </div>
         </div>
-    `;
+        `;
 
     // Load suggestions for the feed
     loadFeedSuggestions();
@@ -1202,7 +1205,7 @@ async function loadFeedSuggestions() {
     }
 
     // Load same college suggestions
-    const sameCollegeData = await apiCall(`/api/users?college=${encodeURIComponent(currentUser?.collegeName || '')}&limit=6`);
+    const sameCollegeData = await apiCall(`/ api / users ? college = ${ encodeURIComponent(currentUser?.collegeName || '') }& limit=6`);
     if (sameCollegeData && sameCollegeData.success) {
         const sameCollegeGrid = document.getElementById('sameCollegeSuggestionsGrid');
         if (sameCollegeGrid) {
@@ -1223,12 +1226,12 @@ async function loadFeedSuggestions() {
 
 // Create a suggestion card for the feed
 function createFeedSuggestionCard(user) {
-    const initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    const initials = `${ user.firstName[0] }${ user.lastName[0] } `.toUpperCase();
     const isPending = currentUser?.sentRequests?.some(r => r._id === user._id || r === user._id);
     const mutualConnections = countMutualConnections(user);
 
     return `
-        <div class="feed-suggestion-card" data-user-id="${user._id}">
+            < div class="feed-suggestion-card" data - user - id="${user._id}" >
             <div class="suggestion-card-avatar">
                 ${initials}
                 ${user.isOnline ? '<span class="online-indicator"></span>' : ''}
@@ -1254,8 +1257,8 @@ function createFeedSuggestionCard(user) {
         }
                 <button class="btn btn-ghost btn-sm" onclick="viewProfile('${user._id}')">View</button>
             </div>
-        </div>
-    `;
+        </div >
+            `;
 }
 
 // Count mutual connections
@@ -1269,10 +1272,10 @@ function countMutualConnections(user) {
 // Switch to a specific tab
 function switchToTab(tabName) {
     document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active'));
-    document.querySelector(`[data-tab="${tabName}"]`)?.classList.add('active');
+    document.querySelector(`[data - tab="${tabName}"]`)?.classList.add('active');
 
     document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-    document.getElementById(`${tabName}Tab`)?.classList.add('active');
+    document.getElementById(`${ tabName } Tab`)?.classList.add('active');
 }
 
 function renderPosts() {
@@ -1282,14 +1285,14 @@ function renderPosts() {
 
     if (posts.length === 0) {
         feed.innerHTML = `
-            <div class="empty-feed">
+            < div class="empty-feed" >
                 <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1">
                     <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/>
                 </svg>
                 <h3>No posts yet</h3>
                 <p>Be the first to share something with your network!</p>
-            </div>
-        `;
+            </div >
+            `;
         return;
     }
 
@@ -1298,12 +1301,12 @@ function renderPosts() {
 
 function createPostCard(post) {
     const author = post.author;
-    const initials = `${author.firstName[0]}${author.lastName[0]}`.toUpperCase();
+    const initials = `${ author.firstName[0] }${ author.lastName[0] } `.toUpperCase();
     const isLiked = post.likes.includes(currentUser?._id);
     const timeAgo = getTimeAgo(post.createdAt);
 
     return `
-        <div class="post-card" data-post-id="${post._id}">
+            < div class="post-card" data - post - id="${post._id}" >
             <div class="post-header">
                 <div class="post-avatar">${initials}</div>
                 <div class="post-author-details">
@@ -1340,25 +1343,25 @@ function createPostCard(post) {
                     ${post.comments.map(comment => createCommentHtml(comment)).join('')}
                 </div>
             </div>
-        </div>
-    `;
+        </div >
+            `;
 }
 
 function createCommentHtml(comment) {
     const user = comment.user;
-    const initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
+    const initials = `${ user.firstName[0] }${ user.lastName[0] } `.toUpperCase();
     const timeAgo = getTimeAgo(comment.createdAt);
 
     return `
-        <div class="comment-item">
+            < div class="comment-item" >
             <div class="comment-avatar">${initials}</div>
             <div class="comment-content">
                 <span class="comment-author">${user.firstName} ${user.lastName}</span>
                 <p class="comment-text">${escapeHtml(comment.content)}</p>
                 <span class="comment-time">${timeAgo}</span>
             </div>
-        </div>
-    `;
+        </div >
+            `;
 }
 
 function getTimeAgo(dateString) {
@@ -1367,9 +1370,9 @@ function getTimeAgo(dateString) {
     const seconds = Math.floor((now - date) / 1000);
 
     if (seconds < 60) return 'Just now';
-    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
-    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
-    if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+    if (seconds < 3600) return `${ Math.floor(seconds / 60) }m ago`;
+    if (seconds < 86400) return `${ Math.floor(seconds / 3600) }h ago`;
+    if (seconds < 604800) return `${ Math.floor(seconds / 86400) }d ago`;
     return date.toLocaleDateString();
 }
 
@@ -1380,7 +1383,7 @@ function escapeHtml(text) {
 }
 
 async function toggleLike(postId) {
-    const data = await apiCall(`/api/posts/${postId}/like`, 'POST');
+    const data = await apiCall(`/ api / posts / ${ postId }/like`, 'POST');
 
     if (data && data.success) {
         // Update UI
@@ -2549,7 +2552,9 @@ function renderChatWindow() {
 
     if (!currentChatPartner) return;
 
-    const initials = `${currentChatPartner.firstName[0]}${currentChatPartner.lastName[0]}`.toUpperCase();
+    const firstName = currentChatPartner.firstName || '';
+    const lastName = currentChatPartner.lastName || '';
+    const initials = `${firstName.charAt(0) || ''}${lastName.charAt(0) || ''}`.toUpperCase();
     const isOnline = currentChatPartner.isOnline;
 
     chatArea.innerHTML = `
@@ -2561,7 +2566,7 @@ function renderChatWindow() {
                         <span class="online-dot ${isOnline ? '' : 'offline'}"></span>
                     </div>
                     <div class="chat-user-info">
-                        <span class="chat-user-name">${currentChatPartner.firstName} ${currentChatPartner.lastName}</span>
+                        <span class="chat-user-name">${firstName} ${lastName}</span>
                         <span class="chat-user-status ${isOnline ? 'online' : ''}">${isOnline ? 'Online' : formatLastSeen(currentChatPartner.lastSeen)}</span>
                     </div>
                 </div>
